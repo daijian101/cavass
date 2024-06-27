@@ -1,6 +1,7 @@
 import os
 import subprocess
 import time
+import re
 import uuid
 from typing import Optional, Iterable
 
@@ -31,24 +32,14 @@ def execute_cmd(cavass_cmd):
         r = r.decode("gbk")
     e = e.decode().strip()
     if e:
-        print(e)
+        e_lines = e.splitlines()
+        line_0_correct_pattern = r"^VIEWNIX_ENV=(/[^/\0]+)+/?$"
+        line_0 = e_lines[0]
+        matched_env = re.match(line_0_correct_pattern, line_0)
+        if len(e_lines) > 1 or not matched_env:
+            raise OSError(f"Error occurred when executing command: {cavass_cmd}\nError message is {e}")
     r = r.strip()
     return r
-
-
-class ExecutionError(Exception):
-    def __init__(self, command, inner_error=None, execution_result=None):
-        self.command = command
-        self.inner_error = inner_error
-        self.execution_result = execution_result
-
-    def __str__(self):
-        msg = f"CAVASS operation failed. CAVASS command is {self.command} "
-        if self.execution_result is not None:
-            msg += f"Execution result is: {self.execution_result} "
-        if self.inner_error is not None:
-            msg += f"Inner error is: {self.inner_error}"
-        return
 
 
 def get_image_resolution(input_file):
@@ -65,16 +56,10 @@ def get_image_resolution(input_file):
         raise FileExistsError(f"{input_file} does not exist.")
     cmd = f"get_slicenumber {input_file} -s"
     r = execute_cmd(cmd)
-    if r:
-        try:
-            r = r.split("\n")[2]
-            r = r.split(" ")
-            r = tuple(map(lambda x: int(x), r))
-            return r
-        except Exception as error:
-            raise ExecutionError(cmd, error, r)
-    else:
-        raise ExecutionError(cmd)
+    r = r.split("\n")[2]
+    r = r.split(" ")
+    r = tuple(map(lambda x: int(x), r))
+    return r
 
 
 def get_voxel_spacing(input_file):
@@ -92,16 +77,9 @@ def get_voxel_spacing(input_file):
         raise FileExistsError(f"{input_file} does not exist.")
     cmd = f"get_slicenumber {input_file} -s"
     r = execute_cmd(cmd)
-    if r:
-        try:
-            r = r.split("\n")[0]
-            r = r.split(" ")
-            r = tuple(map(lambda x: float(x), r))
-            return r
-        except Exception as error:
-            raise ExecutionError(cmd, error, r)
-    else:
-        raise ExecutionError(cmd)
+    r = r.split("\n")[0]
+    r = r.split(" ")
+    r = tuple(map(lambda x: float(x), r))
 
 
 def read_cavass_file(input_file, first_slice=None, last_slice=None, sleep_time=0):
@@ -135,7 +113,6 @@ def read_cavass_file(input_file, first_slice=None, last_slice=None, sleep_time=0
     if sleep_time > 0:
         time.sleep(sleep_time)
     ct = read_mat(output_file)
-    os.remove(output_file)
     return ct
 
 
@@ -305,3 +282,7 @@ def render_surface(input_bim_file, output_file):
         raise ValueError(f"Error was occured.\nERROR MESSAGE: {r}\n CAVASS COMMAND: {gaussian_cmd}")
     os.remove(interpl_tmp_bim_file)
     os.remove(gaussian_tmp_im0_file)
+
+
+if __name__ == "__main__":
+    execute_cmd("exportMath /data1/dj/data/W-DS11-CT-Tiange/pet+ct/IM0_PET_CT_Reader_Part3_73subjects/vaa_aim3_73subjects/DLBCL1PC366-CT-1.IM0 matlab /tmp/cavass/70499c26-3486-11ef-bf6d-3cecef2d918d.mat `get_slicenumber /data1/dj/data/W-DS11-CT-Tiange/pet+ct/IM0_PET_CT_Reader_Part3_73subjects/vaa_aim3_73subjects/DLBCL1PC366-CT-1.IM0`")
