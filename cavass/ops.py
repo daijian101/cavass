@@ -37,7 +37,7 @@ def execute_cmd(cavass_cmd):
         line_0 = e_lines[0]
         matched_env = re.match(line_0_correct_pattern, line_0)
         if len(e_lines) > 1 or not matched_env:
-            raise OSError(f"Error occurred when executing command: {cavass_cmd}\nError message is {e}")
+            raise OSError(f"Error occurred when executing command:\n{cavass_cmd}\nError message is\n{e}")
     r = r.strip()
     return r
 
@@ -80,6 +80,7 @@ def get_voxel_spacing(input_file):
     r = r.split("\n")[0]
     r = r.split(" ")
     r = tuple(map(lambda x: float(x), r))
+    return r
 
 
 def read_cavass_file(input_file, first_slice=None, last_slice=None, sleep_time=0):
@@ -282,7 +283,3 @@ def render_surface(input_bim_file, output_file):
         raise ValueError(f"Error was occured.\nERROR MESSAGE: {r}\n CAVASS COMMAND: {gaussian_cmd}")
     os.remove(interpl_tmp_bim_file)
     os.remove(gaussian_tmp_im0_file)
-
-
-if __name__ == "__main__":
-    execute_cmd("exportMath /data1/dj/data/W-DS11-CT-Tiange/pet+ct/IM0_PET_CT_Reader_Part3_73subjects/vaa_aim3_73subjects/DLBCL1PC366-CT-1.IM0 matlab /tmp/cavass/70499c26-3486-11ef-bf6d-3cecef2d918d.mat `get_slicenumber /data1/dj/data/W-DS11-CT-Tiange/pet+ct/IM0_PET_CT_Reader_Part3_73subjects/vaa_aim3_73subjects/DLBCL1PC366-CT-1.IM0`")
