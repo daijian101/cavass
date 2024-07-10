@@ -101,7 +101,7 @@ def read_cavass_file(input_file, first_slice=None, last_slice=None, sleep_time=0
 
     if not os.path.exists(input_file):
         raise FileExistsError(f'{input_file} does not exist.')
-    tmp_path = '/tmp/cavass'
+    tmp_path = '/var/cache/cavass'
     if not os.path.exists(tmp_path):
         os.makedirs(tmp_path, exist_ok=True)
 
@@ -114,6 +114,7 @@ def read_cavass_file(input_file, first_slice=None, last_slice=None, sleep_time=0
     if sleep_time > 0:
         time.sleep(sleep_time)
     ct = read_mat(output_file)
+    os.remove(output_file)
     return ct
 
 
