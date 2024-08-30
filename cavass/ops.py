@@ -53,7 +53,7 @@ def get_image_resolution(input_file):
     """
 
     if not os.path.exists(input_file):
-        raise FileExistsError(f'{input_file} does not exist.')
+        raise FileNotFoundError(f'{input_file} does not exist.')
     cmd = f'get_slicenumber {input_file} -s'
     r = execute_cmd(cmd)
     r = r.split('\n')[2]
@@ -74,7 +74,7 @@ def get_voxel_spacing(input_file):
     """
 
     if not os.path.exists(input_file):
-        raise FileExistsError(f'{input_file} does not exist.')
+        raise FileNotFoundError(f'{input_file} does not exist.')
     cmd = f'get_slicenumber {input_file} -s'
     r = execute_cmd(cmd)
     r = r.split('\n')[0]
@@ -100,7 +100,7 @@ def read_cavass_file(input_file, first_slice=None, last_slice=None, sleep_time=0
     """
 
     if not os.path.exists(input_file):
-        raise FileExistsError(f'{input_file} does not exist.')
+        raise FileNotFoundError(f'{input_file} does not exist.')
     tmp_path = '/tmp/cavass'
     if not os.path.exists(tmp_path):
         os.makedirs(tmp_path, exist_ok=True)
@@ -149,7 +149,7 @@ def save_cavass_file(output_file,
     assert spacing is None or reference_file is None
     if reference_file is not None:
         if not os.path.exists(reference_file):
-            raise FileExistsError(f'{reference_file} does not exist.')
+            raise FileNotFoundError(f'{reference_file} does not exist.')
 
     if size is None:
         size = data.shape
