@@ -3,7 +3,7 @@ import subprocess
 import time
 import re
 import uuid
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Union
 
 from jbag.io import read_mat, save_mat
 
@@ -118,18 +118,18 @@ def read_cavass_file(input_file, first_slice=None, last_slice=None, sleep_time=0
     return ct
 
 
-def copy_pose(skew_file, good_file, output_file):
+def copy_pose(input_file1, input_file2, output_file):
     output_dir = os.path.split(output_file)[0]
     if not os.path.exists(output_dir):
         os.makedirs(output_dir, exist_ok=True)
-    execute_cmd(f'copy_pose {skew_file} {good_file} {output_file}')
+    execute_cmd(f'copy_pose {input_file1} {input_file2} {output_file}')
 
 
 def save_cavass_file(output_file,
                      data,
                      binary=False,
-                     size: Optional[Iterable] = None,
-                     spacing: Optional[Iterable] = None,
+                     size: Union[None, list[int], tuple[int, ...]] = None,
+                     spacing: Union[None, list[float], tuple[float, ...]] = None,
                      reference_file=None):
     """
     Save data as CAVASS format. Do not provide spacing and reference_file at the same time. Recommend to use binary for
@@ -255,8 +255,10 @@ def export_math(input_file, output_file, output_file_type='matlab', first_slice=
 def render_surface(input_bim_file, output_file):
     """
     Render surface of segmentation. The output file should with postfix of `BS0`.
-    Note that the rendering script may be failed when saving surface file in extension disks.
-    This may be caused by permission limitations and may be solved by outputting the surface file in a different disk.
+    Note that the rendering script may fail when saving output file in extension disks/partitions.
+    I don't know the exact reason for this problem.  But it seems related to the **track_all** script.
+    Script "track_all {input_IM0_file} {output_file} 1.000000 115.000000 254.000000 26 0 0" can't save
+    output file to disks/partitions except the system disk/partition.
 
     Args:
         input_bim_file (str or pathlib.Path):
@@ -268,19 +270,31 @@ def render_surface(input_bim_file, output_file):
         os.makedirs(output_dir, exist_ok=True)
     interpl_tmp_bim_file = os.path.join(output_dir, f'{uuid.uuid1()}.BIM')
     ndinterpolate_cmd = f'ndinterpolate {input_bim_file} {interpl_tmp_bim_file} 0 `get_slicenumber {input_bim_file} -s | head -c 9` `get_slicenumber {input_bim_file} -s | head -c 9` `get_slicenumber {input_bim_file} -s | head -c 9` 1 1 1 1 `get_slicenumber {input_bim_file}`'
-    r = execute_cmd(ndinterpolate_cmd)
-    if r.find('ERROR:') != -1:
-        raise ValueError(f'Error was occured.\nERROR MESSAGE: {r}\n CAVASS COMMAND: {ndinterpolate_cmd}')
+    try:
+        execute_cmd(ndinterpolate_cmd)
+    except Exception as e:
+        os.remove(interpl_tmp_bim_file)
+        raise e
 
     gaussian_tmp_im0_file = os.path.join(output_dir, f'{uuid.uuid1()}.IM0')
     gaussian_cmd = f'gaussian3d {interpl_tmp_bim_file} {gaussian_tmp_im0_file} 0 1.500000'
-    r = execute_cmd(gaussian_cmd)
-    if r.find('ERROR:') != -1:
-        raise ValueError(f'Error was occured.\nERROR MESSAGE: {r}\n CAVASS COMMAND: {gaussian_cmd}')
+    try:
+        execute_cmd(gaussian_cmd)
+    except Exception as e:
+        os.remove(interpl_tmp_bim_file)
+        os.remove(gaussian_tmp_im0_file)
+        raise e
 
     render_cmd = f'track_all {gaussian_tmp_im0_file} {output_file} 1.000000 115.000000 254.000000 26 0 0'
-    r = execute_cmd(render_cmd)
-    if r.find('ERROR:') != -1:
-        raise ValueError(f'Error was occured.\nERROR MESSAGE: {r}\n CAVASS COMMAND: {gaussian_cmd}')
+    try:
+        execute_cmd(render_cmd)
+    except Exception as e:
+        os.remove(interpl_tmp_bim_file)
+        os.remove(gaussian_tmp_im0_file)
+        raise e
+
     os.remove(interpl_tmp_bim_file)
     os.remove(gaussian_tmp_im0_file)
+
+    if not os.path.exists(output_file):
+        raise FileNotFoundError(f'Output file {output_file} fails to created. Try saving output file to system disk to solve this problem.')

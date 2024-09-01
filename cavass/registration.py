@@ -6,7 +6,7 @@ import numpy as np
 from cavass.ops import get_image_resolution, read_cavass_file, save_cavass_file
 
 
-def register_im0_bim(im0_file, bim_file, output_bim_file):
+def match_im0_bim(im0_file, bim_file, output_bim_file):
     shape_1 = get_image_resolution(im0_file)
     shape_2 = get_image_resolution(bim_file)
     output_dir = os.path.split(output_bim_file)[0]
