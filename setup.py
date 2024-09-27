@@ -19,6 +19,6 @@ setuptools.setup(
     ],
     python_requires='~=3.11',
     install_requires=[
-        'jbag >= 2.0.5',
+        'jbag >= 3.0.0',
     ]
 )
