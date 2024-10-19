@@ -1,9 +1,9 @@
 import os
+import re
 import subprocess
 import time
-import re
 import uuid
-from typing import Optional, Iterable, Union
+from typing import Union, LiteralString
 
 from jbag.io import read_mat, save_mat
 
@@ -47,7 +47,7 @@ def get_image_resolution(input_file):
     Get (H,W,D) resolution of input_file.
 
     Args:
-        input_file (str or pathlib.Path):
+        input_file (str or LiteralString):
 
     Returns:
     """
@@ -67,7 +67,7 @@ def get_voxel_spacing(input_file):
     Get spacing between voxels.
 
     Args:
-        input_file (str or pathlib.Path):
+        input_file (str or LiteralString):
 
     Returns:
 
@@ -83,13 +83,33 @@ def get_voxel_spacing(input_file):
     return r
 
 
+def get_slice_number(input_file):
+    """
+    CAVASS `get_slicenumber {input_file} -s`.
+
+    Args:
+        input_file (str or LiteralString):
+
+    Returns:
+
+    """
+    if not os.path.exists(input_file):
+        raise FileNotFoundError(f'{input_file} does not exist.')
+    cmd = f'get_slicenumber {input_file} -s'
+    r = execute_cmd(cmd)
+    results = []
+    for each_line in r.splitlines():
+        results.extend(each_line.split(' '))
+    return tuple(map(lambda x: float(x), results))
+
+
 def read_cavass_file(input_file, first_slice=None, last_slice=None, sleep_time=0):
     """
     Load data of input_file.
     Use the assigned slice indices if both the first slice and the last slice are given.
 
     Args:
-        input_file (str or pathlib.Path):
+        input_file (str or LiteralString):
         first_slice (int or None, optional, default=None): Loading from the first slice (included). Load from the
             inferior slice if first_slice is None.
         last_slice (int or None, optional, default=None): Loading end at the last_slice (included). Loading ends up at
@@ -136,13 +156,13 @@ def save_cavass_file(output_file,
     mask files and reference_file to copy all properties.
 
     Args:
-        output_file (str or pathlib.Path):
+        output_file (str or LiteralString):
         data (numpy.ndarray):
         binary (bool, optional, default=False): Save as binary data if True.
         size (sequence or None, optional, default=None): Array size for converting CAVASS format. Default is None,
             setting the shape of input data array to `size`.
         spacing (sequence or None, optional, default=None): Voxel spacing. Default is None, set (1, 1, 1) to `spacing`.
-        reference_file (str or pathlib.Path or None, optional, default=None): If `reference_file` is given, copy pose
+        reference_file (str or LiteralString or None, optional, default=None): If `reference_file` is given, copy pose
             from the given file to the `output_file`.
     """
 
@@ -200,9 +220,9 @@ def bin_ops(input_file_1, input_file_2, output_file, op):
     Execute binary operations.
 
     Args:
-        input_file_1 (str or pathlib.Path):
-        input_file_2 (str or pathlib.Path):
-        output_file (str or pathlib.Path):
+        input_file_1 (str or LiteralString):
+        input_file_2 (str or LiteralString):
+        output_file (str or LiteralString):
         op (str): `or` | `nor` | `xor` | `xnor` | `and` | `nand` | `a-b`.
     """
 
@@ -218,8 +238,8 @@ def median2d(input_file, output_file, mode=0):
     Perform median filter.
 
     Args:
-        input_file (str or pathlib.Path):
-        output_file (str or pathlib.Path):
+        input_file (str or LiteralString):
+        output_file (str or LiteralString):
         mode (int, optional, default=0): 0 for foreground, 1 for background, default is 0.
     """
 
@@ -234,8 +254,8 @@ def export_math(input_file, output_file, output_file_type='matlab', first_slice=
     Export CAVASS format file to other formats.
 
     Args:
-        input_file (str or pathlib.Path):
-        output_file (str or pathlib.Path):
+        input_file (str or LiteralString):
+        output_file (str or LiteralString):
         output_file_type (str, optional, default="matlab"): Support format: `mathematica` | `mathlab` | `r` | `vtk`.
         first_slice (int, optional, default=-1): Perform from `first_slice`. If -1, `first slice` is set to 0.
         last_slice (int, optional, default=-1): Perform ends up on `last_slice`. If -1, `last_slice` is set to the max
@@ -261,8 +281,8 @@ def render_surface(input_bim_file, output_file):
     output file to disks/partitions except the system disk/partition.
 
     Args:
-        input_bim_file (str or pathlib.Path):
-        output_file (str or pathlib.Path):
+        input_bim_file (str or LiteralString):
+        output_file (str or LiteralString):
     """
 
     output_dir, file_name = os.path.split(output_file)
@@ -297,4 +317,105 @@ def render_surface(input_bim_file, output_file):
     os.remove(gaussian_tmp_im0_file)
 
     if not os.path.exists(output_file):
-        raise FileNotFoundError(f'Output file {output_file} fails to created. Try saving output file to system disk to solve this problem.')
+        raise FileNotFoundError(
+            f'Output file {output_file} fails to created. Try saving output file to system disk to solve this problem.')
+
+
+def ndvoi(input_file: Union[str, LiteralString], output_file: Union[str, LiteralString], mode: int = 0,
+          offset_x=0, offset_y=0, new_width=0, new_height=0, min_intensity: int = 0, max_intensity: int = 0,
+          min_slice_dim_3=None, max_slice_dim_3=None, min_slice_dim_4=None, max_slice_dim_4=None):
+    """
+    CAVASS `ndvoi input output mode [offx offy new_width new_height min max [min3 max3] [min4 max4] | [z]margin]`
+    Args:
+        input_file (str or LiteralString):
+        output_file (str or LiteralString):
+        mode (int, optional, default=0): Mode of operation (0=foreground, 1=background).
+        offset_x (int or float, optional, default=0): Offset of the origin of the new scene in respect to input scene.
+        offset_y (int or float, optional, default=0): Offset of the origin of the new scene in respect to input scene.
+        new_width (int, optional, default=0): Dimensions (in pixels) of new scene(0=original dimensions).
+        new_height (int, optional, default=0): Dimensions (in pixels) of new scene(0=original dimensions).
+        min_intensity (int, optional, default=0): Grey window for the pixels values (0 = entire range).
+        max_intensity (int, optional, default=0): Grey window for the pixels values (0 = entire range).
+        min_slice_dim_3 (int or None, optional, default=None): Min slice along the third axis.
+        max_slice_dim_3 (int or None, optional, default=None): Max slice along the third axis.
+        min_slice_dim_4 (int or None, optional, default=None): Min slice along the fourth axis.
+        max_slice_dim_4 (int or None, optional, default=None): Max slice along the fourth axis.
+
+    Returns:
+
+    """
+
+    if not os.path.exists(input_file):
+        raise FileNotFoundError(f'{input_file} does not exist.')
+
+    assert mode in [0, 1], f'{mode} is not a valid mode. (0=foreground, 1=background)'
+
+    output_dir = os.path.split(output_file)[0]
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+
+    cmd = f'ndvoi {input_file} {output_file} {mode} {offset_x} {offset_y} {new_width} {new_height} {min_intensity} {max_intensity}'
+    if min_slice_dim_3 is not None:
+        cmd += f' {min_slice_dim_3}'
+    if max_slice_dim_3 is not None:
+        cmd += f' {max_slice_dim_3}'
+    if min_slice_dim_4 is not None:
+        cmd += f' {min_slice_dim_4}'
+    if max_slice_dim_4 is not None:
+        cmd += f' {max_slice_dim_4}'
+    execute_cmd(cmd)
+
+
+def matched_reslice(file_to_reslice: Union[str, LiteralString], file_to_match: Union[str, LiteralString],
+                    output_file: Union[str, LiteralString], matrix=None, interpolation_method: str = 'linear',
+                    landmark=None, new_loc=None):
+    """
+    Position the content of file_to_reslice in the correct location in file_to_match.
+
+    Args:
+        file_to_reslice (str or LiteralString):
+        file_to_match (str or LiteralString):
+        output_file (str or LiteralString):
+        matrix (optional, default=None): 4x3 rigid transformation from scanner coordinate system of `file_to_reslice` to `file_to_match`.
+        interpolation_method (str, optional, default="linear"): Interpolation method, supported options are `linear` and `nearest`.
+        landmark (optional, default=None): Scanner coordinates of landmark in input scene to reslice
+        new_loc (optional, default=None): New location of landmark in scanner coordinate system.
+
+    Returns:
+
+    """
+    if not os.path.exists(file_to_reslice):
+        raise FileNotFoundError(f'{file_to_reslice} does not exist.')
+
+    if not os.path.exists(file_to_match):
+        raise FileNotFoundError(f'{file_to_match} does not exist.')
+
+    assert interpolation_method in ['linear', 'nearest'], (
+        f'{interpolation_method} is not a valid interpolation method.'
+        f' Support interpolation methods are `linear` and `nearest`.')
+    interpolation_method = interpolation_method[0]
+
+    output_dir = os.path.split(output_file)[0]
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+
+    cmd = f'matched_reslice {file_to_reslice} {file_to_match} {output_file}'
+    # TODO: don't konw the format of matrix for now.
+    if matrix is not None:
+        cmd += f' {matrix}'
+
+    cmd += f' -{interpolation_method}'
+
+    # TODO: don't know how landmark and new_loc look like.
+    if landmark is not None:
+        cmd += f' {landmark}'
+    if new_loc is not None:
+        cmd += f' {new_loc}'
+    execute_cmd(cmd)
+
+
+if __name__ == '__main__':
+    file1 = '/Users/jiandai/data/W-DS1/trimmed_BIM/Proper_Abdomen/N003-AT-CT.BIM'
+    file2 = '/Users/jiandai/data/W-DS1/body_torso_CT/N003-CT.IM0'
+    output = '/Users/jiandai/tmp/tmp2.BIM'
+    matched_reslice(file1, file2, output)

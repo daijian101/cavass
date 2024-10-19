@@ -10,11 +10,13 @@ This library implements medical image processing methods involving using CAVASS 
 
 ## Structure
 
-**ops.py** contains codes that implement CAVASS shell commands, like reading CAVASS format files, saving  CAVASS format files, etc.
+**ops.py** contains codes that implement CAVASS shell commands, like reading CAVASS format files, saving CAVASS format
+files, etc.
 
 **contrast_enhancement.py** contains windowing functions predefined in CAVASS GUI (soft tissue, bone, and PET).
 
-**converters.py** includes codes for converting medical image file formats, like converting images from NifTI format to CAVASS format.
+**converters.py** includes codes for converting medical image file formats, like converting images from NifTI format to
+CAVASS format.
 
 **registration.py** includes methods of matching images and segmentations for now.
 
@@ -22,7 +24,11 @@ This library implements medical image processing methods involving using CAVASS 
 
 ### Set CAVASS build path
 
-To use this package, Linux version of CAVASS is necessary to be installed, https://www.mipg.upenn.edu/Vnews/mipg_software.html. And the CAVASS package path is needed to add in the environment variables. If the CAVASS software is installed on the *"~/cavass-build"* path, you don't need to set the environment variable. Otherwise, you need to assign your CAVASS installation path before invoking any other methods in "cavass.ops".
+To use this package, Linux version of CAVASS is necessary to be
+installed, https://www.mipg.upenn.edu/Vnews/mipg_software.html. And the CAVASS package path is needed to add in the
+environment variables. If the CAVASS software is installed on the *"~/cavass-build"* path, you don't need to set the
+environment variable. Otherwise, you need to assign your CAVASS installation path before invoking any other methods in "
+cavass.ops".
 
 ```
 import cavass.ops
@@ -42,7 +48,8 @@ image = read_cavass_file(input_file, first_slice=None, last_slice=None)
 Output: np.ndarray[512, 512, 284]
 ```
 
-Typically, you only need to pass the "*input file*" to the function for reading the IM0 image or BIM segmentation. If you assign the first_slice/last_slice value(s), then only slices in this range would be returned.
+Typically, you only need to pass the "*input file*" to the function for reading the IM0 image or BIM segmentation. If
+you assign the first_slice/last_slice value(s), then only slices in this range would be returned.
 
 #### Save CAVASS file
 
@@ -54,7 +61,11 @@ data: np.ndarray uint16 for image, bool for segmentation
 save_cavass_file(output_file, data, binary=False, size=None, spacing=None, reference_file=None)
 ```
 
-Save data to *output_file*. If data is an image, set *binary* to False. If data is a segmentation, set *binary* to True. Parameter *size* is the size of input data. The default is None, which means using the size of input data. You can directly ignore this parameter in most situations. Parameter *spacing* is used to set the voxel spacing of the input data. And if *reference_file* exist, copy pose from reference file to the new output file. The most common scenario of using this function is to save a segmentation of a given medical image.
+Save data to *output_file*. If data is an image, set *binary* to False. If data is a segmentation, set *binary* to True.
+Parameter *size* is the size of input data. The default is None, which means using the size of input data. You can
+directly ignore this parameter in most situations. Parameter *spacing* is used to set the voxel spacing of the input
+data. And if *reference_file* exist, copy pose from reference file to the new output file. The most common scenario of
+using this function is to save a segmentation of a given medical image.
 
 ```
 from cavass.ops import save_cavass_file
@@ -65,7 +76,8 @@ segmentation: np.ndarray bool
 save_cavass_file(output_file, segmentation, binary=True, reference_file=image_file)
 ```
 
-Above code saves segmentation to output file CT_segmentation.BIM. And copy properties of image CT.IM0 to the new BIM file.
+Above code saves segmentation to output file CT_segmentation.BIM. And copy properties of image CT.IM0 to the new BIM
+file.
 
 #### Copy pose
 
@@ -75,7 +87,8 @@ from cavass.ops import copy_pose
 copy_pose(input_file1, input_file2, output_file)
 ```
 
-Copy properties (voxel spacing, orientation, etc.) of *<u>input_file2</u>* to *input_file1*, and output the new file *output_file*.
+Copy properties (voxel spacing, orientation, etc.) of *<u>input_file2</u>* to *input_file1*, and output the new file
+*output_file*.
 
 #### Export
 
@@ -85,7 +98,10 @@ from cavass.ops import export_math
 export_math(input_file, output_file, output_file_type='matlab', first_slice=-1, last_slice=-1)
 ```
 
-Export *input_file* to *output_file* with the format of *output_file_type*. The supported output formats include **mathematica**, **mathlab**, **r**, and **vtk**. The parameters of  *first_slice* and the *last_slice* indicate the first and last slice index for export. If set to -1, the *first_slice* is set to 0, and the *last_slice* is set to the max slice index of the input image.
+Export *input_file* to *output_file* with the format of *output_file_type*. The supported output formats include *
+*mathematica**, **mathlab**, **r**, and **vtk**. The parameters of  *first_slice* and the *last_slice* indicate the
+first and last slice index for export. If set to -1, the *first_slice* is set to 0, and the *last_slice* is set to the
+max slice index of the input image.
 
 ### Convert image format
 
@@ -97,7 +113,9 @@ from cavass.converters import dicom2cavass
 dicom2cavass(input_dir, output_file, offset_value=0)
 ```
 
-Convert dicom image to CAVASS format. *input_dir* is the directory that contains dicom files. CAVASS IM0 format uses uint16 as the data type. However, Hounsfield units have negative values. So *offset_value* is used to transfer HU to non-negative range, 1024 is commonly used for HU.
+Convert dicom image to CAVASS format. *input_dir* is the directory that contains dicom files. CAVASS IM0 format uses
+uint16 as the data type. However, Hounsfield units have negative values. So *offset_value* is used to transfer HU to
+non-negative range, 1024 is commonly used for HU.
 
 #### NIfTI to CAVASS
 
@@ -107,7 +125,8 @@ from cavass.converters import nifti2cavass
 nifti2cavass(input_file, output_file, offset_value=0)
 ```
 
-Convert input NIfTI image to CAVASS format. CAVASS IM0 format uses uint16 as the data type. However, Hounsfield units have negative values. So *offset_value* is used to transfer HU to the non-negative range, 1024 is commonly used for HU. 
+Convert input NIfTI image to CAVASS format. CAVASS IM0 format uses uint16 as the data type. However, Hounsfield units
+have negative values. So *offset_value* is used to transfer HU to the non-negative range, 1024 is commonly used for HU.
 
 Package nifti2dicom is required for converting. `sudo apt install nifti2dicom`.
 
@@ -119,7 +138,11 @@ from cavass.converters import nifti_label2cavass
 nifti_label2cavass(input_file, output_file, objects, discard_background=True)
 ```
 
-Convert NIfTI format segmentation file to CAVASS BIM files. Since a NIfTI format segmentation file could contain arbitrary kinds of categories, and a CAVASS BIM file only contains one type of object, one NIfTI segmentation file may convert to multiple CAVASS BIM files. The final output file is {output_file}_{objects[i]}.BIM. *objects* can be an array, which contains the object labels in the input NIfTI segmentation file that are desired to be converted, or a string split by comma. 
+Convert NIfTI format segmentation file to CAVASS BIM files. Since a NIfTI format segmentation file could contain
+arbitrary kinds of categories, and a CAVASS BIM file only contains one type of object, one NIfTI segmentation file may
+convert to multiple CAVASS BIM files. The final output file is {output_file}_{objects[i]}.BIM. *objects* can be an
+array, which contains the object labels in the input NIfTI segmentation file that are desired to be converted, or a
+string split by comma.
 
 Package nifti2dicom is required for converting. `sudo apt install nifti2dicom`.
 
@@ -131,8 +154,8 @@ from cavass.converters import cavass2nifti
 cavass2nifti(input_file, output_file, orientation='ARI')
 ```
 
-Convert CAVASS format file to NIfTI format file. Parameter of *orientation* assigns the image orientation for the output NIfTI file. Supported options include ARI and LPI for now.
-
+Convert CAVASS format file to NIfTI format file. Parameter of *orientation* assigns the image orientation for the output
+NIfTI file. Supported options include ARI and LPI for now.
 
 ### Get Image resolution
 
@@ -163,7 +186,8 @@ from cavass.ops import bin_ops
 bin_ops(input_file_1, input_file_2, output_file, op)
 ```
 
-Perform binary operations between two input files *input_file_1* and *input_file_2*. The supported operations include **or**, **nor**, **xor**, **xnor**, **and**, **nand**, and **a-b**.
+Perform binary operations between two input files *input_file_1* and *input_file_2*. The supported operations include *
+*or**, **nor**, **xor**, **xnor**, **and**, **nand**, and **a-b**.
 
 ### Median filter
 
@@ -173,7 +197,8 @@ from cavass.ops import median2d
 median2d(input_file, output_file, mode=0)
 ```
 
-Perform 2D median filter to *input_file* and output *output_file*. Set *mode=0* for foreground filtering, *mode=1* for background.
+Perform 2D median filter to *input_file* and output *output_file*. Set *mode=0* for foreground filtering, *mode=1* for
+background.
 
 ### Render surface
 
@@ -183,9 +208,12 @@ from cavass.ops import render_surface
 render_surface(input_bim_file, output_file)
 ```
 
-Render the surface of the input BIM file. 
+Render the surface of the input BIM file.
 
-Note that the rendering script may fail when saving output file in extension disks/partitions. I don't know the exact reason for this problem.  But it seems related to the **track_all** script.  Script "track_all {input_IM0_file} {output_file} 1.000000 115.000000 254.000000 26 0 0" can't save output file to disks/partitions except the system disk/partition.
+Note that the rendering script may fail when saving output file in extension disks/partitions. I don't know the exact
+reason for this problem. But it seems related to the **track_all** script. Script "track_all {input_IM0_file}
+{output_file} 1.000000 115.000000 254.000000 26 0 0" can't save output file to disks/partitions except the system
+disk/partition.
 
 ### Windowing
 
@@ -220,6 +248,8 @@ from cavass.registration import match_im0_bim
 match_im0_bim(im0_file, bim_file, output_bim_file)
 ```
 
-This method is used to match an IM0 file and a BIM file. 
+This method is used to match an IM0 file and a BIM file.
 
-Operators may stop to slide the rest slices once reach the boundary of the interest object when segmenting the object. This will lead to incomplete segmentation BIM file. This method can complete BIM segmentation file whose absent slices are from a middle position to the cranial direction.
+Operators may stop to slide the rest slices once reach the boundary of the interest object when segmenting the object.
+This will lead to incomplete segmentation BIM file. This method can complete BIM segmentation file whose absent slices
+are from a middle position to the cranial direction.

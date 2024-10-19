@@ -2,12 +2,12 @@ import os
 import shutil
 from uuid import uuid4
 
+import numpy as np
 from jbag.io import save_nifti
 from jbag.medical_image_converters import nifti2dicom
 
 from cavass.ops import execute_cmd, get_voxel_spacing, read_cavass_file
 from cavass.utils import one_hot
-import numpy as np
 
 
 def dicom2cavass(input_dir, output_file, offset_value=0):
