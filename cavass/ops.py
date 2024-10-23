@@ -1,11 +1,12 @@
 import os
 import re
+import shutil
 import subprocess
 import time
 import uuid
 from typing import Union, LiteralString
 
-from jbag.io import read_mat, save_mat
+from jbag.io import read_mat, save_mat, ensure_output_file_dir_existence
 
 # CAVASS build path, default in installation is ~/cavass-build.
 # If CAVASS build path is not in PATH or is not as same as default, set `CAVASS_PROFILE_PATH` to your CAVASS build path.
@@ -52,8 +53,8 @@ def get_image_resolution(input_file):
     Returns:
     """
 
-    if not os.path.exists(input_file):
-        raise FileNotFoundError(f'{input_file} does not exist.')
+    assert os.path.isfile(input_file), f'{input_file} does not exist or is not a file!'
+
     cmd = f'get_slicenumber {input_file} -s'
     r = execute_cmd(cmd)
     r = r.split('\n')[2]
@@ -73,8 +74,8 @@ def get_voxel_spacing(input_file):
 
     """
 
-    if not os.path.exists(input_file):
-        raise FileNotFoundError(f'{input_file} does not exist.')
+    assert os.path.isfile(input_file), f'{input_file} does not exist or is not a file!'
+
     cmd = f'get_slicenumber {input_file} -s'
     r = execute_cmd(cmd)
     r = r.split('\n')[0]
@@ -93,8 +94,8 @@ def get_slice_number(input_file):
     Returns:
 
     """
-    if not os.path.exists(input_file):
-        raise FileNotFoundError(f'{input_file} does not exist.')
+    assert os.path.isfile(input_file), f'{input_file} does not exist or is not a file!'
+
     cmd = f'get_slicenumber {input_file} -s'
     r = execute_cmd(cmd)
     results = []
@@ -119,18 +120,23 @@ def read_cavass_file(input_file, first_slice=None, last_slice=None, sleep_time=0
 
     """
 
-    if not os.path.exists(input_file):
-        raise FileNotFoundError(f'{input_file} does not exist.')
+    assert os.path.isfile(input_file), f'{input_file} does not exist or is not a file!'
+
     tmp_path = os.path.expanduser('~/tmp/cavass')
     if not os.path.exists(tmp_path):
-        os.makedirs(tmp_path, exist_ok=True)
+        os.makedirs(tmp_path)
 
     output_file = os.path.join(tmp_path, f'{uuid.uuid1()}.mat')
     if first_slice is None or last_slice is None:
         cvt2mat = f'exportMath {input_file} matlab {output_file} `get_slicenumber {input_file}`'
     else:
         cvt2mat = f'exportMath {input_file} matlab {output_file} {first_slice} {last_slice}'
-    execute_cmd(cvt2mat)
+    try:
+        execute_cmd(cvt2mat)
+    except Exception as e:
+        if os.path.exists(output_file):
+            os.remove(output_file)
+        raise e
     if sleep_time > 0:
         time.sleep(sleep_time)
     ct = read_mat(output_file)
@@ -138,11 +144,20 @@ def read_cavass_file(input_file, first_slice=None, last_slice=None, sleep_time=0
     return ct
 
 
-def copy_pose(input_file1, input_file2, output_file):
-    output_dir = os.path.split(output_file)[0]
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir, exist_ok=True)
-    execute_cmd(f'copy_pose {input_file1} {input_file2} {output_file}')
+def copy_pose(input_file_1, input_file_2, output_file):
+    assert os.path.isfile(input_file_1), f'{input_file_1} does not exist or is not a file!'
+    assert os.path.isfile(input_file_2), f'{input_file_2} does not exist or is not a file!'
+
+    made_output_dir, output_dir = ensure_output_file_dir_existence(output_file)
+
+    try:
+        execute_cmd(f'copy_pose {input_file_1} {input_file_2} {output_file}')
+    except Exception as e:
+        if made_output_dir and os.path.isdir(output_dir):
+            shutil.rmtree(output_dir)
+        if os.path.exists(output_file):
+            os.remove(output_file)
+        raise e
 
 
 def save_cavass_file(output_file,
@@ -168,8 +183,7 @@ def save_cavass_file(output_file,
 
     assert spacing is None or reference_file is None
     if reference_file is not None:
-        if not os.path.exists(reference_file):
-            raise FileNotFoundError(f'{reference_file} does not exist.')
+        assert os.path.exists(reference_file), f'{reference_file} does not exist!'
 
     if size is None:
         size = data.shape
@@ -178,38 +192,77 @@ def save_cavass_file(output_file,
 
     spacing = ' '.join(list(map(lambda x: str(x), spacing))) if spacing is not None else ''
 
-    output_path = os.path.split(output_file)[0]
-    if not os.path.exists(output_path):
-        os.makedirs(output_path, exist_ok=True)
+    made_output_dir, output_dir = ensure_output_file_dir_existence(output_file)
 
     tmp_files = []
-    tmp_mat = os.path.join(output_path, f'tmp_{uuid.uuid1()}.mat')
+    tmp_mat = os.path.join(output_dir, f'tmp_{uuid.uuid1()}.mat')
     tmp_files.append(tmp_mat)
     save_mat(tmp_mat, data)
 
     if not binary:
         if reference_file is None:
-            execute_cmd(f'importMath {tmp_mat} matlab {output_file} {size} {spacing}')
+            try:
+                execute_cmd(f'importMath {tmp_mat} matlab {output_file} {size} {spacing}')
+            except Exception as e:
+                if made_output_dir and os.path.isdir(output_dir):
+                    shutil.rmtree(output_dir)
+                for tmp_file in tmp_files:
+                    if os.path.exists(tmp_file):
+                        os.remove(tmp_file)
+                raise e
         else:
-            tmp_file = os.path.join(output_path, f'tmp_{uuid.uuid1()}.IM0')
+            tmp_file = os.path.join(output_dir, f'tmp_{uuid.uuid1()}.IM0')
             tmp_files.append(tmp_file)
-            execute_cmd(f'importMath {tmp_mat} matlab {tmp_file} {size}')
-            copy_pose(tmp_file, reference_file, output_file)
+            try:
+                execute_cmd(f'importMath {tmp_mat} matlab {tmp_file} {size}')
+                copy_pose(tmp_file, reference_file, output_file)
+            except Exception as e:
+                if made_output_dir and os.path.isdir(output_dir):
+                    shutil.rmtree(output_dir)
+                for tmp_file in tmp_files:
+                    if os.path.exists(tmp_file):
+                        os.remove(tmp_file)
+                raise e
+
     if binary:
         if reference_file is None:
-            tmp_file = os.path.join(output_path, f'tmp_{uuid.uuid1()}.IM0')
+            tmp_file = os.path.join(output_dir, f'tmp_{uuid.uuid1()}.IM0')
             tmp_files.append(tmp_file)
-            execute_cmd(f'importMath {tmp_mat} matlab {tmp_file} {size} {spacing}')
-            execute_cmd(f'ndthreshold {tmp_file} {output_file} 0 1 1')
+            try:
+                execute_cmd(f'importMath {tmp_mat} matlab {tmp_file} {size} {spacing}')
+                execute_cmd(f'ndthreshold {tmp_file} {output_file} 0 1 1')
+            except Exception as e:
+                if made_output_dir and os.path.isdir(output_dir):
+                    shutil.rmtree(output_dir)
+                for tmp_file in tmp_files:
+                    if os.path.exists(tmp_file):
+                        os.remove(tmp_file)
+                raise e
         else:
-            tmp_file = os.path.join(output_path, f'tmp_{uuid.uuid1()}.IM0')
+            tmp_file = os.path.join(output_dir, f'tmp_{uuid.uuid1()}.IM0')
             tmp_files.append(tmp_file)
-            execute_cmd(f'importMath {tmp_mat} matlab {tmp_file} {size}')
+            try:
+                execute_cmd(f'importMath {tmp_mat} matlab {tmp_file} {size}')
+            except Exception as e:
+                if made_output_dir and os.path.isdir(output_dir):
+                    shutil.rmtree(output_dir)
+                for tmp_file in tmp_files:
+                    if os.path.exists(tmp_file):
+                        os.remove(tmp_file)
+                raise e
 
-            tmp_file1 = os.path.join(output_path, f'tmp_{uuid.uuid1()}.BIM')
+            tmp_file1 = os.path.join(output_dir, f'tmp_{uuid.uuid1()}.BIM')
             tmp_files.append(tmp_file1)
-            execute_cmd(f'ndthreshold {tmp_file} {tmp_file1} 0 1 1')
-            copy_pose(tmp_file1, reference_file, output_file)
+            try:
+                execute_cmd(f'ndthreshold {tmp_file} {tmp_file1} 0 1 1')
+                copy_pose(tmp_file1, reference_file, output_file)
+            except Exception as e:
+                if made_output_dir and os.path.isdir(output_dir):
+                    shutil.rmtree(output_dir)
+                for tmp_file in tmp_files:
+                    if os.path.exists(tmp_file):
+                        os.remove(tmp_file)
+                raise e
 
     for each in tmp_files:
         os.remove(each)
@@ -226,11 +279,20 @@ def bin_ops(input_file_1, input_file_2, output_file, op):
         op (str): `or` | `nor` | `xor` | `xnor` | `and` | `nand` | `a-b`.
     """
 
-    output_dir = os.path.split(output_file)[0]
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir, exist_ok=True)
+    assert os.path.isfile(input_file_1), f'{input_file_1} does not exist or is not a file!'
+    assert os.path.isfile(input_file_2), f'{input_file_2} does not exist or is not a file!'
+
+    made_output_dir, output_dir = ensure_output_file_dir_existence(output_file)
+
     cmd_str = f'bin_ops {input_file_1} {input_file_2} {output_file} {op}'
-    execute_cmd(cmd_str)
+    try:
+        execute_cmd(cmd_str)
+    except Exception as e:
+        if made_output_dir and os.path.isdir(output_dir):
+            shutil.rmtree(output_dir)
+        if os.path.exists(output_file):
+            os.remove(output_file)
+        raise e
 
 
 def median2d(input_file, output_file, mode=0):
@@ -243,10 +305,18 @@ def median2d(input_file, output_file, mode=0):
         mode (int, optional, default=0): 0 for foreground, 1 for background, default is 0.
     """
 
-    output_dir = os.path.split(output_file)[0]
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir, exist_ok=True)
-    execute_cmd(f'median2d {input_file} {output_file} {mode}')
+    assert os.path.isfile(input_file), f'{input_file} does not exist or is not a file!'
+
+    made_output_dir, output_dir = ensure_output_file_dir_existence(output_file)
+
+    try:
+        execute_cmd(f'median2d {input_file} {output_file} {mode}')
+    except Exception as e:
+        if made_output_dir and os.path.isdir(output_dir):
+            shutil.rmtree(output_dir)
+        if os.path.exists(output_file):
+            os.remove(output_file)
+        raise e
 
 
 def export_math(input_file, output_file, output_file_type='matlab', first_slice=-1, last_slice=-1):
@@ -262,14 +332,23 @@ def export_math(input_file, output_file, output_file_type='matlab', first_slice=
             slice index of input image.
     """
 
+    assert os.path.isfile(input_file), f'{input_file} does not exist or is not a file!'
+
     first_slice = 0 if first_slice == -1 else first_slice
     if last_slice == -1:
         resolution = get_image_resolution(input_file)
         last_slice = resolution[2] - 1
-    output_dir = os.path.split(output_file)[0]
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir, exist_ok=True)
-    execute_cmd(f'exportMath {input_file} {output_file_type} {output_file} {first_slice} {last_slice}')
+
+    made_output_dir, output_dir = ensure_output_file_dir_existence(output_file)
+
+    try:
+        execute_cmd(f'exportMath {input_file} {output_file_type} {output_file} {first_slice} {last_slice}')
+    except Exception as e:
+        if made_output_dir and os.path.isdir(output_dir):
+            shutil.rmtree(output_dir)
+        if os.path.exists(output_file):
+            os.remove(output_file)
+        raise e
 
 
 def render_surface(input_bim_file, output_file):
@@ -285,15 +364,19 @@ def render_surface(input_bim_file, output_file):
         output_file (str or LiteralString):
     """
 
-    output_dir, file_name = os.path.split(output_file)
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir, exist_ok=True)
+    assert os.path.isfile(input_bim_file), f'{input_bim_file} does not exist or is not a file!'
+
+    made_output_dir, output_dir = ensure_output_file_dir_existence(output_file)
+
     interpl_tmp_bim_file = os.path.join(output_dir, f'{uuid.uuid1()}.BIM')
     ndinterpolate_cmd = f'ndinterpolate {input_bim_file} {interpl_tmp_bim_file} 0 `get_slicenumber {input_bim_file} -s | head -c 9` `get_slicenumber {input_bim_file} -s | head -c 9` `get_slicenumber {input_bim_file} -s | head -c 9` 1 1 1 1 `get_slicenumber {input_bim_file}`'
     try:
         execute_cmd(ndinterpolate_cmd)
     except Exception as e:
-        os.remove(interpl_tmp_bim_file)
+        if made_output_dir and os.path.isdir(output_dir):
+            shutil.rmtree(output_dir)
+        if os.path.exists(interpl_tmp_bim_file):
+            os.remove(interpl_tmp_bim_file)
         raise e
 
     gaussian_tmp_im0_file = os.path.join(output_dir, f'{uuid.uuid1()}.IM0')
@@ -301,16 +384,26 @@ def render_surface(input_bim_file, output_file):
     try:
         execute_cmd(gaussian_cmd)
     except Exception as e:
-        os.remove(interpl_tmp_bim_file)
-        os.remove(gaussian_tmp_im0_file)
+        if made_output_dir and os.path.isdir(output_dir):
+            shutil.rmtree(output_dir)
+        if os.path.exists(interpl_tmp_bim_file):
+            os.remove(interpl_tmp_bim_file)
+        if os.path.exists(gaussian_tmp_im0_file):
+            os.remove(gaussian_tmp_im0_file)
         raise e
 
     render_cmd = f'track_all {gaussian_tmp_im0_file} {output_file} 1.000000 115.000000 254.000000 26 0 0'
     try:
         execute_cmd(render_cmd)
     except Exception as e:
-        os.remove(interpl_tmp_bim_file)
-        os.remove(gaussian_tmp_im0_file)
+        if made_output_dir and os.path.isdir(output_dir):
+            shutil.rmtree(output_dir)
+        if os.path.exists(interpl_tmp_bim_file):
+            os.remove(interpl_tmp_bim_file)
+        if os.path.exists(gaussian_tmp_im0_file):
+            os.remove(gaussian_tmp_im0_file)
+        if os.path.exists(output_file):
+            os.remove(output_file)
         raise e
 
     os.remove(interpl_tmp_bim_file)
@@ -345,14 +438,11 @@ def ndvoi(input_file: Union[str, LiteralString], output_file: Union[str, Literal
 
     """
 
-    if not os.path.exists(input_file):
-        raise FileNotFoundError(f'{input_file} does not exist.')
+    assert os.path.isfile(input_file), f'{input_file} does not exist or is not a file!'
 
     assert mode in [0, 1], f'{mode} is not a valid mode. (0=foreground, 1=background)'
 
-    output_dir = os.path.split(output_file)[0]
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir, exist_ok=True)
+    made_output_dir, output_dir = ensure_output_file_dir_existence(output_file)
 
     cmd = f'ndvoi {input_file} {output_file} {mode} {offset_x} {offset_y} {new_width} {new_height} {min_intensity} {max_intensity}'
     if min_slice_dim_3 is not None:
@@ -363,7 +453,14 @@ def ndvoi(input_file: Union[str, LiteralString], output_file: Union[str, Literal
         cmd += f' {min_slice_dim_4}'
     if max_slice_dim_4 is not None:
         cmd += f' {max_slice_dim_4}'
-    execute_cmd(cmd)
+    try:
+        execute_cmd(cmd)
+    except Exception as e:
+        if made_output_dir and os.path.isdir(output_dir):
+            shutil.rmtree(output_dir)
+        if os.path.exists(output_file):
+            os.remove(output_file)
+        raise e
 
 
 def matched_reslice(file_to_reslice: Union[str, LiteralString], file_to_match: Union[str, LiteralString],
@@ -384,20 +481,15 @@ def matched_reslice(file_to_reslice: Union[str, LiteralString], file_to_match: U
     Returns:
 
     """
-    if not os.path.exists(file_to_reslice):
-        raise FileNotFoundError(f'{file_to_reslice} does not exist.')
-
-    if not os.path.exists(file_to_match):
-        raise FileNotFoundError(f'{file_to_match} does not exist.')
+    assert os.path.isfile(file_to_reslice), f'{file_to_reslice} does not exist or is not a file!'
+    assert os.path.isfile(file_to_match), f'{file_to_match} does not exist or is not a file!'
 
     assert interpolation_method in ['linear', 'nearest'], (
         f'{interpolation_method} is not a valid interpolation method.'
         f' Support interpolation methods are `linear` and `nearest`.')
     interpolation_method = interpolation_method[0]
 
-    output_dir = os.path.split(output_file)[0]
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir, exist_ok=True)
+    made_output_dir, output_dir = ensure_output_file_dir_existence(output_file)
 
     cmd = f'matched_reslice {file_to_reslice} {file_to_match} {output_file}'
     # TODO: don't konw the format of matrix for now.
@@ -411,11 +503,11 @@ def matched_reslice(file_to_reslice: Union[str, LiteralString], file_to_match: U
         cmd += f' {landmark}'
     if new_loc is not None:
         cmd += f' {new_loc}'
-    execute_cmd(cmd)
-
-
-if __name__ == '__main__':
-    file1 = '/Users/jiandai/data/W-DS1/trimmed_BIM/Proper_Abdomen/N003-AT-CT.BIM'
-    file2 = '/Users/jiandai/data/W-DS1/body_torso_CT/N003-CT.IM0'
-    output = '/Users/jiandai/tmp/tmp2.BIM'
-    matched_reslice(file1, file2, output)
+    try:
+        execute_cmd(cmd)
+    except Exception as e:
+        if made_output_dir and os.path.isdir(output_dir):
+            shutil.rmtree(output_dir)
+        if os.path.exists(output_file):
+            os.remove(output_file)
+        raise e

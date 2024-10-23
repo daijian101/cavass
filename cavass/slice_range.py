@@ -5,19 +5,19 @@ from jbag.log import logger
 from cavass.ops import get_slice_number
 
 
-def get_slice_range(input_file_1: Union[str, LiteralString], input_file_2: Union[str, LiteralString]):
+def get_slice_range(portion_file: Union[str, LiteralString], entire_region_file: Union[str, LiteralString]):
     """
-    Get the slice location range where the input file 1 is located in the input file 2.
+    Get the slice location range where the `portion file` is located in the `entire region file`.
 
     Args:
-        input_file_1 (str or LiteralString):
-        input_file_2 (str or LiteralString):
+        portion_file (str or LiteralString):
+        entire_region_file (str or LiteralString):
 
     Returns:
 
     """
-    slice_number_1 = get_slice_number(input_file_1)
-    slice_number_2 = get_slice_number(input_file_2)
+    slice_number_1 = get_slice_number(portion_file)
+    slice_number_2 = get_slice_number(entire_region_file)
     # inferior slice refers to the index of slice in input_file_2 where
     # the inferior slice (the first slice) of input_file_1 located in input_file_2.
     # While the superior slice indicates the slice index in input_file_2
@@ -29,5 +29,9 @@ def get_slice_range(input_file_1: Union[str, LiteralString], input_file_2: Union
             slice_number_1[2] != slice_number_2[2]) or (slice_number_1[3] != slice_number_2[3]) or (
             slice_number_1[4] != slice_number_2[4]) or (slice_number_1[6] != slice_number_2[6]) or (
             slice_number_1[7] != slice_number_2[7]):
-        logger.warning(f'Input files do not match.\nInput file 1 is {input_file_1}.\nInput file 2 is {input_file_2}.')
-    return inferior_slice_idx, superior_slice_idx
+        logger.warning(
+            f'Input files do not match.\nInput file 1 is {portion_file}.\nInput file 2 is {entire_region_file}.')
+        unmatched = [portion_file, entire_region_file]
+    else:
+        unmatched = []
+    return inferior_slice_idx, superior_slice_idx, unmatched
