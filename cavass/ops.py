@@ -124,7 +124,7 @@ def read_cavass_file(input_file, first_slice=None, last_slice=None, sleep_time=0
 
     tmp_path = os.path.expanduser('~/tmp/cavass')
     if not os.path.exists(tmp_path):
-        os.makedirs(tmp_path)
+        os.makedirs(tmp_path, exist_ok=True)
 
     output_file = os.path.join(tmp_path, f'{uuid.uuid1()}.mat')
     if first_slice is None or last_slice is None:
