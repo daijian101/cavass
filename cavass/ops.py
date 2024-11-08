@@ -145,6 +145,16 @@ def read_cavass_file(input_file, first_slice=None, last_slice=None, sleep_time=0
 
 
 def copy_pose(input_file_1, input_file_2, output_file):
+    """
+    Copy pose of `input_file_2` to `input_file_1`, output to `output_file`.
+    Args:
+        input_file_1:
+        input_file_2:
+        output_file:
+
+    Returns:
+
+    """
     assert os.path.isfile(input_file_1), f'{input_file_1} does not exist or is not a file!'
     assert os.path.isfile(input_file_2), f'{input_file_2} does not exist or is not a file!'
 
@@ -165,7 +175,7 @@ def save_cavass_file(output_file,
                      binary=False,
                      size: Union[None, list[int], tuple[int, ...]] = None,
                      spacing: Union[None, list[float], tuple[float, ...]] = None,
-                     reference_file=None):
+                     copy_pose_file=None):
     """
     Save data as CAVASS format. Do not provide spacing and reference_file at the same time. Recommend to use binary for
     mask files and reference_file to copy all properties.
@@ -177,13 +187,13 @@ def save_cavass_file(output_file,
         size (sequence or None, optional, default=None): Array size for converting CAVASS format. Default is None,
             setting the shape of input data array to `size`.
         spacing (sequence or None, optional, default=None): Voxel spacing. Default is None, set (1, 1, 1) to `spacing`.
-        reference_file (str or LiteralString or None, optional, default=None): If `reference_file` is given, copy pose
+        copy_pose_file (str or LiteralString or None, optional, default=None): If `copy_pose_file` is given, copy pose
             from the given file to the `output_file`.
     """
 
-    assert spacing is None or reference_file is None
-    if reference_file is not None:
-        assert os.path.exists(reference_file), f'{reference_file} does not exist!'
+    assert spacing is None or copy_pose_file is None
+    if copy_pose_file is not None:
+        assert os.path.exists(copy_pose_file), f'{copy_pose_file} does not exist!'
 
     if size is None:
         size = data.shape
@@ -200,7 +210,7 @@ def save_cavass_file(output_file,
     save_mat(tmp_mat, data)
 
     if not binary:
-        if reference_file is None:
+        if copy_pose_file is None:
             try:
                 execute_cmd(f'importMath {tmp_mat} matlab {output_file} {size} {spacing}')
             except Exception as e:
@@ -215,7 +225,7 @@ def save_cavass_file(output_file,
             tmp_files.append(tmp_file)
             try:
                 execute_cmd(f'importMath {tmp_mat} matlab {tmp_file} {size}')
-                copy_pose(tmp_file, reference_file, output_file)
+                copy_pose(tmp_file, copy_pose_file, output_file)
             except Exception as e:
                 if made_output_dir and os.path.isdir(output_dir):
                     shutil.rmtree(output_dir)
@@ -225,7 +235,7 @@ def save_cavass_file(output_file,
                 raise e
 
     if binary:
-        if reference_file is None:
+        if copy_pose_file is None:
             tmp_file = os.path.join(output_dir, f'tmp_{uuid.uuid1()}.IM0')
             tmp_files.append(tmp_file)
             try:
@@ -255,7 +265,7 @@ def save_cavass_file(output_file,
             tmp_files.append(tmp_file1)
             try:
                 execute_cmd(f'ndthreshold {tmp_file} {tmp_file1} 0 1 1')
-                copy_pose(tmp_file1, reference_file, output_file)
+                copy_pose(tmp_file1, copy_pose_file, output_file)
             except Exception as e:
                 if made_output_dir and os.path.isdir(output_dir):
                     shutil.rmtree(output_dir)

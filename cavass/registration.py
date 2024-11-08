@@ -23,7 +23,7 @@ def match_im0_bim(im0_file, bim_file, output_bim_file):
         data = np.zeros(shape_1, dtype=bool)
         data[..., :original_data.shape[2]] = original_data
         try:
-            save_cavass_file(output_bim_file, data, True, reference_file=im0_file)
+            save_cavass_file(output_bim_file, data, True, copy_pose_file=im0_file)
         except Exception as e:
             if made_output_dir and os.path.isdir(output_dir):
                 shutil.rmtree(output_dir)
