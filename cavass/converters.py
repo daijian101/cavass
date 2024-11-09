@@ -1,10 +1,11 @@
 import os
 import shutil
-from uuid import uuid4
+from uuid import uuid1
 
 import numpy as np
+from jbag.converters.dicom import Modality
+from jbag.converters.nifti2dicom import nifti2dicom
 from jbag.io import save_nifti, ensure_output_file_dir_existence
-from jbag.medical_image_converters import nifti2dicom
 
 from cavass.ops import execute_cmd, get_voxel_spacing, read_cavass_file, copy_pose
 from cavass.utils import one_hot
@@ -45,19 +46,19 @@ def dicom2cavass(input_dir, output_file, offset_value=0, copy_pose_file=None):
             if os.path.exists(output_file):
                 os.remove(output_file)
         raise e
-
+    os.remove(output_tmp_file)
     return r
 
 
-def nifti2cavass(input_file, output_file, offset_value=0, dicom_accession_number=1, copy_pose_file=None):
+def nifti2cavass(input_file, output_file, modality, offset_value=0, copy_pose_file=None):
     """
     Convert NIfTI image to cavass image.
 
     Args:
         input_file (str or LiteralString):
         output_file (str or LiteralString):
+        modality (Modality):
         offset_value (int, optional, default=0):
-        dicom_accession_number (int, optional, default=1):
         copy_pose_file (str or LiteralString, optional, default=None):
     """
 
@@ -68,9 +69,9 @@ def nifti2cavass(input_file, output_file, offset_value=0, dicom_accession_number
 
     made_output_dir, output_dir = ensure_output_file_dir_existence(output_file)
 
-    tmp_dicom_dir = os.path.join(output_dir, f'{uuid4()}')
+    tmp_dicom_dir = os.path.join(output_dir, f'{uuid1()}')
     try:
-        r1 = nifti2dicom(input_file, tmp_dicom_dir, dicom_accession_number)
+        r1 = nifti2dicom(input_file, tmp_dicom_dir, modality=modality, force_overwrite=True)
         r2 = dicom2cavass(tmp_dicom_dir, output_file, offset_value, copy_pose_file)
     except Exception as e:
         if made_output_dir and os.path.isdir(output_dir):
@@ -105,7 +106,8 @@ def cavass2nifti(input_file, output_file, orientation='ARI'):
     save_nifti(output_file, data, spacing, orientation=orientation)
 
 
-def nifti_label2cavass(input_file, output_file, objects, discard_background=True, copy_pose_file=None):
+def nifti_label2cavass(input_file, output_file, objects,
+                       modality=Modality.CT, discard_background=True, copy_pose_file=None):
     """
     Convert NIfTI format segmentation file to cavass BIM format file. A NIfTI file in where contains arbitrary categories
     of objects will convert to multiple CAVASS BIM files, which matches to the number of object categories.
@@ -116,6 +118,7 @@ def nifti_label2cavass(input_file, output_file, objects, discard_background=True
         `output_file_prefix_{objects[i]}.BIM`
         objects (sequence or str): Objects is an array or a string with comma splitter of object categories,
         where the index of the category in the array is the number that indicates the category in the segmentation.
+        modality (Modality, optional, default=Modality.CT):
         discard_background (bool, optional, default True): If True, the regions with label of 0 in the segmentation
         (typically refer to the background region) will not be saved.
         copy_pose_file (str or LiteralString, optional, default=None):
@@ -135,16 +138,21 @@ def nifti_label2cavass(input_file, output_file, objects, discard_background=True
 
     if isinstance(objects, str):
         objects = objects.split(',')
-    one_hot_arr = one_hot(image_data, num_classes=len(objects))
+    n_classes = len(objects) + 1 if discard_background else len(objects)
+    one_hot_arr = one_hot(image_data, num_classes=n_classes)
 
     start = 1 if discard_background else 0
     for i in range(start, one_hot_arr.shape[3]):
         nifti_label_image = nib.Nifti1Image(one_hot_arr[..., i], input_data.affine, input_data.header, dtype=np.uint8)
-        tmp_nifti_file = f'{output_file}_{objects[i]}.nii.gz'
+        if discard_background:
+            obj = objects[i - 1]
+        else:
+            obj = objects[i]
+        tmp_nifti_file = f'{output_file}_{obj}.nii.gz'
         made_output_dir, output_dir = ensure_output_file_dir_existence(tmp_nifti_file)
         try:
             nib.save(nifti_label_image, tmp_nifti_file)
-            nifti2cavass(tmp_nifti_file, f'{output_file}_{objects[i]}.BIM', copy_pose_file=copy_pose_file)
+            nifti2cavass(tmp_nifti_file, f'{output_file}_{obj}.BIM', modality, copy_pose_file=copy_pose_file)
         except Exception as e:
             if made_output_dir and os.path.isdir(output_dir):
                 shutil.rmtree(output_dir)
