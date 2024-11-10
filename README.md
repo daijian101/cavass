@@ -58,13 +58,13 @@ from cavass.ops import save_cavass_file
 
 data: np.ndarray uint16 for image, bool for segmentation
 
-save_cavass_file(output_file, data, binary=False, size=None, spacing=None, reference_file=None)
+save_cavass_file(output_file, data, binary=False, size=None, spacing=None, copy_pose_file=None)
 ```
 
 Save data to *output_file*. If data is an image, set *binary* to False. If data is a segmentation, set *binary* to True.
 Parameter *size* is the size of input data. The default is None, which means using the size of input data. You can
 directly ignore this parameter in most situations. Parameter *spacing* is used to set the voxel spacing of the input
-data. And if *reference_file* exist, copy pose from reference file to the new output file. The most common scenario of
+data. And if *copy_pose_file* exist, copy pose from reference file to the new output file. The most common scenario of
 using this function is to save a segmentation of a given medical image.
 
 ```
@@ -122,29 +122,25 @@ non-negative range, 1024 is commonly used for HU.
 ```
 from cavass.converters import nifti2cavass
 
-nifti2cavass(input_file, output_file, offset_value=0)
+nifti2cavass(input_file, output_file, modality, offset_value=0, copy_pose_file)
 ```
 
 Convert input NIfTI image to CAVASS format. CAVASS IM0 format uses uint16 as the data type. However, Hounsfield units
-have negative values. So *offset_value* is used to transfer HU to the non-negative range, 1024 is commonly used for HU.
-
-Package nifti2dicom is required for converting. `sudo apt install nifti2dicom`.
+have negative values. So *offset_value* is used to transfer HU to the non-negative range, 1024 is commonly used for HU. Copy pose from the copy pose file to the output file if the copy pose file exists.
 
 #### NIfTI segmentation file to CAVASS BIM file
 
 ```
 from cavass.converters import nifti_label2cavass
 
-nifti_label2cavass(input_file, output_file, objects, discard_background=True)
+nifti_label2cavass(input_file, output_file, objects, modality, discard_background=True, copy_pose_file)
 ```
 
 Convert NIfTI format segmentation file to CAVASS BIM files. Since a NIfTI format segmentation file could contain
 arbitrary kinds of categories, and a CAVASS BIM file only contains one type of object, one NIfTI segmentation file may
 convert to multiple CAVASS BIM files. The final output file is {output_file}_{objects[i]}.BIM. *objects* can be an
-array, which contains the object labels in the input NIfTI segmentation file that are desired to be converted, or a
-string split by comma.
-
-Package nifti2dicom is required for converting. `sudo apt install nifti2dicom`.
+array, which contains the oject labels in the input NIfTI segmentation file that are desired to be converted, or a
+string split by commas. Copy pose from the copy pose file to the output file if the copy pose file exists.
 
 #### CAVASS to NIFTI
 
