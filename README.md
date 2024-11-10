@@ -254,7 +254,7 @@ cavass_bone_windowing uses a center of 2000, and a window width of 4000.
 
 cavass_pet_windowing uses a center of 1200, a window width of 3500, and the invert transform.
 
-### Match files
+### Match file
 
 ```
 from cavass.match import match
