@@ -10,10 +10,10 @@ from cavass.ops import ndvoi, matched_reslice, bin_ops
 from cavass.slice_range import get_slice_range
 
 
-def integrate(untrimmed_file: Union[str, LiteralString],
-              trimmed_files: Sequence[Union[str, LiteralString]],
-              output_file_1: Union[str, LiteralString],
-              output_file_2: Union[str, LiteralString]):
+def integrate_trimmed_images(trimmed_files: Sequence[Union[str, LiteralString]],
+                             reference_file: Union[str, LiteralString],
+                             output_file_1: Union[str, LiteralString],
+                             output_file_2: Union[str, LiteralString]):
     """
     Suture trimmed CAVASS files.
     For the situation that the whole file is trimmed into multiple files of body regions, this script integrates
@@ -22,16 +22,16 @@ def integrate(untrimmed_file: Union[str, LiteralString],
     trimmed files and may not be the same as the ROI of original untrimmed file.
 
     Args:
-        untrimmed_file (str or LiteralString): The original untrimmed file.
         trimmed_files (Sequence): Trimmed files. trimmed files must be arranged correctly in the order of form inferior to superior.
-        output_file_1 (str or LiteralString): `output_file_1` is the output file trimmed from the untrimmed file according to the ROI obtained from the untrimmed files.`
+        reference_file (str or LiteralString): File to match.
+        output_file_1 (str or LiteralString): `output_file_1` is the output file trimmed from the reference file according to the ROI obtained from the trimmed files.`
         output_file_2 (str or LiteralString): `output_file_2` is the output file of integrated files of the untrimmed files.
 
     Returns:
 
     """
 
-    assert os.path.exists(untrimmed_file), f'{untrimmed_file} does not exist!.'
+    assert os.path.exists(reference_file), f'{reference_file} does not exist!.'
     for each in trimmed_files:
         assert os.path.exists(each), f'{each} does not exist!.'
 
@@ -39,9 +39,9 @@ def integrate(untrimmed_file: Union[str, LiteralString],
     # The inferior location is the inferior location of the first trimmed image in the untrimmed image.
     # The superior location is the superior location of the last trimmed image in the untrimmed image.
     all_unmatched_files = []
-    inferior_slice_idx, _, unmatched_files = get_slice_range(trimmed_files[0], untrimmed_file)
+    inferior_slice_idx, _, unmatched_files = get_slice_range(trimmed_files[0], reference_file)
     all_unmatched_files.extend(unmatched_files)
-    _, superior_slice_idx, unmatched_files = get_slice_range(trimmed_files[-1], untrimmed_file)
+    _, superior_slice_idx, unmatched_files = get_slice_range(trimmed_files[-1], reference_file)
     all_unmatched_files.extend(unmatched_files)
 
     # CAVASS uses index started from 1.
@@ -54,7 +54,7 @@ def integrate(untrimmed_file: Union[str, LiteralString],
     made_output_dir_1, output_dir_1 = ensure_output_file_dir_existence(output_file_1)
 
     try:
-        ndvoi(untrimmed_file, output_file_1, min_slice_dim_3=inferior_slice_idx, max_slice_dim_3=superior_slice_idx)
+        ndvoi(reference_file, output_file_1, min_slice_dim_3=inferior_slice_idx, max_slice_dim_3=superior_slice_idx)
     except Exception as e:
         if made_output_dir_1 and os.path.isdir(output_dir_1):
             shutil.rmtree(output_dir_1)
@@ -74,7 +74,7 @@ def integrate(untrimmed_file: Union[str, LiteralString],
         tmp_files.append(reslice_file)
         reslice_files.append(reslice_file)
         try:
-            matched_reslice(trimmed_file, untrimmed_file, reslice_file, interpolation_method=interpolation_method)
+            matched_reslice(trimmed_file, reference_file, reslice_file, interpolation_method=interpolation_method)
         except Exception as e:
             if made_output_dir_1 and os.path.isdir(output_dir_1):
                 shutil.rmtree(output_dir_1)

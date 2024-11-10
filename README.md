@@ -126,7 +126,8 @@ nifti2cavass(input_file, output_file, modality, offset_value=0, copy_pose_file)
 ```
 
 Convert input NIfTI image to CAVASS format. CAVASS IM0 format uses uint16 as the data type. However, Hounsfield units
-have negative values. So *offset_value* is used to transfer HU to the non-negative range, 1024 is commonly used for HU. Copy pose from the copy pose file to the output file if the copy pose file exists.
+have negative values. So *offset_value* is used to transfer HU to the non-negative range, 1024 is commonly used for HU.
+Copy pose from the copy pose file to the output file if the copy pose file exists.
 
 #### NIfTI segmentation file to CAVASS BIM file
 
@@ -211,6 +212,23 @@ reason for this problem. But it seems related to the **track_all** script. Scrip
 {output_file} 1.000000 115.000000 254.000000 26 0 0" can't save output file to disks/partitions except the system
 disk/partition.
 
+### ndvoi
+CAVASS `ndvoi input output mode [offx offy new_width new_height min max [min3 max3] [min4 max4] | [z]margin]`
+
+```
+from cavass.ops import ndvoi
+
+ndvoi(untrimmed_file, output_file, min_slice_dim_3=inferior_slice_idx, max_slice_dim_3=superior_slice_idx)
+```
+
+### matched reslice
+
+```
+from cavass.ops import matched_reslice
+
+matched_reslice(file_to_reslice, file_to_match, output_file, interpolation_method=interpolation_method):
+```
+
 ### Windowing
 
 ```
@@ -239,13 +257,19 @@ cavass_pet_windowing uses a center of 1200, a window width of 3500, and the inve
 ### Match files
 
 ```
-from cavass.registration import match_im0_bim
+from cavass.match import match
 
-match_im0_bim(im0_file, bim_file, output_bim_file)
+match(unmatched_file, file_to_match, output_file)
 ```
 
-This method is used to match an IM0 file and a BIM file.
+### Combine trimmed files
 
-Operators may stop to slide the rest slices once reach the boundary of the interest object when segmenting the object.
-This will lead to incomplete segmentation BIM file. This method can complete BIM segmentation file whose absent slices
-are from a middle position to the cranial direction.
+```
+from cavass.integration import integrate_trimmed_images
+
+# output_file_1 is the image trimmed from the reference file according to the ROI obtained from the trimmed files.
+# output_file_2 is the integrated image of trimmed images.
+integrate_trimmed_images(trimmed_files, reference_file, output_file_1, output_file_2)
+
+```
+
