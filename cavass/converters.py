@@ -3,10 +3,10 @@ import shutil
 from uuid import uuid1
 
 import numpy as np
-from jbag.converters.dicom import Modality
-from jbag.converters.nifti2dicom import nifti2dicom
-from jbag.io import save_nifti, ensure_output_file_dir_existence
 
+from cavass._io import ensure_output_file_dir_existence, save_nifti
+from cavass.dicom import Modality
+from cavass.nifti2dicom import nifti2dicom
 from cavass.ops import execute_cmd, get_voxel_spacing, read_cavass_file, copy_pose
 from cavass.utils import one_hot
 

@@ -1,7 +1,6 @@
 from typing import Union, LiteralString
 
-from jbag.log import logger
-
+from _log import logger
 from cavass.ops import get_slice_number
 
 

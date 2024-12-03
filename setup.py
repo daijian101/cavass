@@ -5,7 +5,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
     name='cavass',
-    version='1.1.7',
+    version='1.1.8',
     author='Dai Jian',
     author_email='daijian@stumail.ysu.edu.cn',
     description='CAVASS python APIs.',
@@ -19,6 +19,9 @@ setuptools.setup(
     ],
     python_requires='~=3.11',
     install_requires=[
-        'jbag >= 4.0.6',
+        'numpy >= 1.21.0',
+        'scipy >= 1.7.3',
+        'pydicom >= 2.4.3',
+        'nibabel >= 4.0.1',
     ]
 )

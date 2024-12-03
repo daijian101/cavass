@@ -6,7 +6,7 @@ import time
 import uuid
 from typing import Union, LiteralString
 
-from jbag.io import read_mat, save_mat, ensure_output_file_dir_existence
+from cavass._io import read_mat, save_mat, ensure_output_file_dir_existence
 
 # CAVASS build path, default in installation is ~/cavass-build.
 # If CAVASS build path is not in PATH or is not as same as default, set `CAVASS_PROFILE_PATH` to your CAVASS build path.
@@ -133,13 +133,13 @@ def read_cavass_file(input_file, first_slice=None, last_slice=None, sleep_time=0
         cvt2mat = f'exportMath {input_file} matlab {output_file} {first_slice} {last_slice}'
     try:
         execute_cmd(cvt2mat)
+        if sleep_time > 0:
+            time.sleep(sleep_time)
+        ct = read_mat(output_file)
     except Exception as e:
         if os.path.exists(output_file):
             os.remove(output_file)
         raise e
-    if sleep_time > 0:
-        time.sleep(sleep_time)
-    ct = read_mat(output_file)
     os.remove(output_file)
     return ct
 

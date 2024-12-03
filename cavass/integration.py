@@ -3,8 +3,7 @@ import shutil
 import uuid
 from typing import Union, LiteralString, Sequence
 
-from jbag.io import ensure_output_file_dir_existence
-
+from cavass._io import ensure_output_file_dir_existence
 from cavass.constants import CAVASS_START_INDEX
 from cavass.ops import ndvoi, matched_reslice, bin_ops
 from cavass.slice_range import get_slice_range

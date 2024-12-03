@@ -2,8 +2,8 @@ import os.path
 import shutil
 
 import numpy as np
-from jbag.io import ensure_output_file_dir_existence
 
+from cavass._io import ensure_output_file_dir_existence
 from cavass.ops import get_image_resolution, read_cavass_file, save_cavass_file
 
 
