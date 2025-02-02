@@ -1,4 +1,4 @@
-from _log import logger
+from cavass._log import logger
 from cavass.ops import get_slice_number
 
 

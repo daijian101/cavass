@@ -5,7 +5,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
     name='cavass',
-    version='1.1.9',
+    version='1.2.0',
     author='Dai Jian',
     author_email='daijian@stumail.ysu.edu.cn',
     description='CAVASS python APIs.',
