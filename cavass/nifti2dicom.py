@@ -6,8 +6,8 @@ import numpy as np
 from pydicom import Dataset
 from pydicom.uid import generate_uid
 
-from cavass.dicom import get_dicom_dataset, Modality
 from cavass._log import logger
+from cavass.dicom import get_dicom_dataset, Modality
 
 
 def write_slice(ds: Dataset, image_data, slice_index, output_dir):
@@ -119,8 +119,8 @@ def nifti2dicom(input_nifti_file, output_dicom_dir, modality: Modality, force_ov
     Convert NIfTI image to DICOM image series. Inspired by https://github.com/tomaroberts/nii2dcm.
 
     Args:
-        input_nifti_file (str or LiteralString):
-        output_dicom_dir (str or LiteralString):
+        input_nifti_file (str):
+        output_dicom_dir (str):
         modality (Modality):
         force_overwrite (bool, optional, default=False): If `Ture`, overwrite `output_dicom_dir` if it exists.`
 

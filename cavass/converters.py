@@ -16,10 +16,10 @@ def dicom2cavass(input_dir, output_file, offset_value=0, copy_pose_file=None):
     Note that if the output file path is too long, this command may be failed.
 
     Args:
-        input_dir (str or LiteralString):
-        output_file (str or LiteralString):
+        input_dir (str):
+        output_file (str):
         offset_value (int, optional, default=0):
-        copy_pose_file (str or LiteralString, optional, default=None): If `copy_pose_file` is given, copy pose of this
+        copy_pose_file (str, optional, default=None): If `copy_pose_file` is given, copy pose of this
         file to the output file.
 
     """
@@ -55,11 +55,11 @@ def nifti2cavass(input_file, output_file, modality, offset_value=0, copy_pose_fi
     Convert NIfTI image to cavass image.
 
     Args:
-        input_file (str or LiteralString):
-        output_file (str or LiteralString):
+        input_file (str):
+        output_file (str):
         modality (Modality):
         offset_value (int, optional, default=0):
-        copy_pose_file (str or LiteralString, optional, default=None):
+        copy_pose_file (str, optional, default=None):
     """
 
     assert os.path.isfile(input_file), f'Input file {input_file} does not exist or is not a file!'
@@ -91,8 +91,8 @@ def cavass2nifti(input_file, output_file, orientation='ARI'):
     Convert cavass IM0 and BIM formats to NIfTI.
 
     Args:
-        input_file (str or LiteralString):
-        output_file (str or LiteralString):
+        input_file (str):
+        output_file (str):
         orientation (str, optional, default="ARI"): Image orientation of NIfTI file, `ARI` or 'LPI'
 
     Returns:
@@ -113,7 +113,7 @@ def nifti_label2cavass(input_file, output_file, objects,
     of objects will convert to multiple CAVASS BIM files, which matches to the number of object categories.
 
     Args:
-        input_file (str or LiteralString):
+        input_file (str):
         output_file (str): The final saved file for category i in input segmentation will be
         `output_file_prefix_{objects[i]}.BIM`
         objects (sequence or str): Objects is an array or a string with comma splitter of object categories,
@@ -121,7 +121,7 @@ def nifti_label2cavass(input_file, output_file, objects,
         modality (Modality, optional, default=Modality.CT):
         discard_background (bool, optional, default True): If True, the regions with label of 0 in the segmentation
         (typically refer to the background region) will not be saved.
-        copy_pose_file (str or LiteralString, optional, default=None):
+        copy_pose_file (str, optional, default=None):
 
     Returns:
 

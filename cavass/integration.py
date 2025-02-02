@@ -1,7 +1,7 @@
 import os.path
 import shutil
 import uuid
-from typing import Union, LiteralString, Sequence
+from typing import Union
 
 from cavass._io import ensure_output_file_dir_existence
 from cavass.constants import CAVASS_START_INDEX
@@ -9,10 +9,10 @@ from cavass.ops import ndvoi, matched_reslice, bin_ops
 from cavass.slice_range import get_slice_range
 
 
-def integrate_trimmed_images(trimmed_files: Sequence[Union[str, LiteralString]],
-                             reference_file: Union[str, LiteralString],
-                             output_file_1: Union[str, LiteralString],
-                             output_file_2: Union[str, LiteralString]):
+def integrate_trimmed_images(trimmed_files: Union[list[str], tuple[str]],
+                             reference_file: str,
+                             output_file_1: str,
+                             output_file_2: str, ):
     """
     Suture trimmed CAVASS files.
     For the situation that the whole file is trimmed into multiple files of body regions, this script integrates
@@ -21,10 +21,10 @@ def integrate_trimmed_images(trimmed_files: Sequence[Union[str, LiteralString]],
     trimmed files and may not be the same as the ROI of original untrimmed file.
 
     Args:
-        trimmed_files (Sequence): Trimmed files. trimmed files must be arranged correctly in the order of form inferior to superior.
-        reference_file (str or LiteralString): File to match.
-        output_file_1 (str or LiteralString): `output_file_1` is the output file trimmed from the reference file according to the ROI obtained from the trimmed files.`
-        output_file_2 (str or LiteralString): `output_file_2` is the output file of integrated files of the untrimmed files.
+        trimmed_files (tuple or list): Trimmed files. trimmed files must be arranged correctly in the order of form inferior to superior.
+        reference_file (str): File to match.
+        output_file_1 (str): `output_file_1` is the output file trimmed from the reference file according to the ROI obtained from the trimmed files.`
+        output_file_2 (str): `output_file_2` is the output file of integrated files of the untrimmed files.
 
     Returns:
 

@@ -1,6 +1,5 @@
 import os
 import shutil
-from typing import Union, LiteralString
 
 from cavass._io import ensure_output_file_dir_existence
 from cavass.constants import CAVASS_START_INDEX
@@ -8,15 +7,15 @@ from cavass.ops import matched_reslice
 from cavass.slice_range import get_slice_range
 
 
-def match(unmatched_file: Union[str, LiteralString],
-          file_to_match: Union[str, LiteralString],
-          output_file: Union[str, LiteralString]):
+def match(unmatched_file: str,
+          file_to_match: str,
+          output_file: str):
     """
     Match body region.
     Args:
-        unmatched_file (str or LiteralString):
-        file_to_match (str or LiteralString):
-        output_file (str or LiteralString):
+        unmatched_file (str):
+        file_to_match (str):
+        output_file (str):
 
     Returns:
 

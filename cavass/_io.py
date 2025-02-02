@@ -24,7 +24,7 @@ def save_nifti(output_file,
     Save image with nii format.
 
     Args:
-        output_file (str or LiteralString):
+        output_file (str):
         data (numpy.ndarray):
         voxel_spacing (sequence or None, optional, default=None): `tuple(x, y, z)`. Voxel spacing of each axis. If None,
             make `voxel_spacing` as `(1.0, 1.0, 1.0)`.

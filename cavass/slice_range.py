@@ -1,16 +1,14 @@
-from typing import Union, LiteralString
-
 from _log import logger
 from cavass.ops import get_slice_number
 
 
-def get_slice_range(partial_region_file: Union[str, LiteralString], entire_region_file: Union[str, LiteralString]):
+def get_slice_range(partial_region_file: str, entire_region_file: str):
     """
     Get the slice location range where the `portion file` is located in the `entire region file`.
 
     Args:
-        partial_region_file (str or LiteralString):
-        entire_region_file (str or LiteralString):
+        partial_region_file (str):
+        entire_region_file (str):
 
     Returns:
 

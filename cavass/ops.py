@@ -4,7 +4,7 @@ import shutil
 import subprocess
 import time
 import uuid
-from typing import Union, LiteralString
+from typing import Union
 
 from cavass._io import read_mat, save_mat, ensure_output_file_dir_existence
 
@@ -48,7 +48,7 @@ def get_image_resolution(input_file):
     Get (H,W,D) resolution of input_file.
 
     Args:
-        input_file (str or LiteralString):
+        input_file (str):
 
     Returns:
     """
@@ -68,7 +68,7 @@ def get_voxel_spacing(input_file):
     Get spacing between voxels.
 
     Args:
-        input_file (str or LiteralString):
+        input_file (str):
 
     Returns:
 
@@ -89,7 +89,7 @@ def get_slice_number(input_file):
     CAVASS `get_slicenumber {input_file} -s`.
 
     Args:
-        input_file (str or LiteralString):
+        input_file (str):
 
     Returns:
 
@@ -110,7 +110,7 @@ def read_cavass_file(input_file, first_slice=None, last_slice=None, sleep_time=0
     Use the assigned slice indices if both the first slice and the last slice are given.
 
     Args:
-        input_file (str or LiteralString):
+        input_file (str):
         first_slice (int or None, optional, default=None): Loading from the first slice (included). Load from the
             inferior slice if first_slice is None.
         last_slice (int or None, optional, default=None): Loading end at the last_slice (included). Loading ends up at
@@ -181,13 +181,13 @@ def save_cavass_file(output_file,
     mask files and reference_file to copy all properties.
 
     Args:
-        output_file (str or LiteralString):
+        output_file (str):
         data (numpy.ndarray):
         binary (bool, optional, default=False): Save as binary data if True.
         size (sequence or None, optional, default=None): Array size for converting CAVASS format. Default is None,
             setting the shape of input data array to `size`.
         spacing (sequence or None, optional, default=None): Voxel spacing. Default is None, set (1, 1, 1) to `spacing`.
-        copy_pose_file (str or LiteralString or None, optional, default=None): If `copy_pose_file` is given, copy pose
+        copy_pose_file (str or None, optional, default=None): If `copy_pose_file` is given, copy pose
             from the given file to the `output_file`.
     """
 
@@ -283,9 +283,9 @@ def bin_ops(input_file_1, input_file_2, output_file, op):
     Execute binary operations.
 
     Args:
-        input_file_1 (str or LiteralString):
-        input_file_2 (str or LiteralString):
-        output_file (str or LiteralString):
+        input_file_1 (str):
+        input_file_2 (str):
+        output_file (str):
         op (str): `or` | `nor` | `xor` | `xnor` | `and` | `nand` | `a-b`.
     """
 
@@ -310,8 +310,8 @@ def median2d(input_file, output_file, mode=0):
     Perform median filter.
 
     Args:
-        input_file (str or LiteralString):
-        output_file (str or LiteralString):
+        input_file (str):
+        output_file (str):
         mode (int, optional, default=0): 0 for foreground, 1 for background, default is 0.
     """
 
@@ -334,8 +334,8 @@ def export_math(input_file, output_file, output_file_type='matlab', first_slice=
     Export CAVASS format file to other formats.
 
     Args:
-        input_file (str or LiteralString):
-        output_file (str or LiteralString):
+        input_file (str):
+        output_file (str):
         output_file_type (str, optional, default="matlab"): Support format: `mathematica` | `mathlab` | `r` | `vtk`.
         first_slice (int, optional, default=-1): Perform from `first_slice`. If -1, `first slice` is set to 0.
         last_slice (int, optional, default=-1): Perform ends up on `last_slice`. If -1, `last_slice` is set to the max
@@ -370,8 +370,8 @@ def render_surface(input_bim_file, output_file):
     output file to disks/partitions except the system disk/partition.
 
     Args:
-        input_bim_file (str or LiteralString):
-        output_file (str or LiteralString):
+        input_bim_file (str):
+        output_file (str):
     """
 
     assert os.path.isfile(input_bim_file), f'{input_bim_file} does not exist or is not a file!'
@@ -424,14 +424,14 @@ def render_surface(input_bim_file, output_file):
             f'Output file {output_file} fails to created. Try saving output file to system disk to solve this problem.')
 
 
-def ndvoi(input_file: Union[str, LiteralString], output_file: Union[str, LiteralString], mode: int = 0,
+def ndvoi(input_file: str, output_file: str, mode: int = 0,
           offset_x=0, offset_y=0, new_width=0, new_height=0, min_intensity: int = 0, max_intensity: int = 0,
           min_slice_dim_3=None, max_slice_dim_3=None, min_slice_dim_4=None, max_slice_dim_4=None):
     """
     CAVASS `ndvoi input output mode [offx offy new_width new_height min max [min3 max3] [min4 max4] | [z]margin]`
     Args:
-        input_file (str or LiteralString):
-        output_file (str or LiteralString):
+        input_file (str):
+        output_file (str):
         mode (int, optional, default=0): Mode of operation (0=foreground, 1=background).
         offset_x (int or float, optional, default=0): Offset of the origin of the new scene in respect to input scene.
         offset_y (int or float, optional, default=0): Offset of the origin of the new scene in respect to input scene.
@@ -473,16 +473,16 @@ def ndvoi(input_file: Union[str, LiteralString], output_file: Union[str, Literal
         raise e
 
 
-def matched_reslice(file_to_reslice: Union[str, LiteralString], file_to_match: Union[str, LiteralString],
-                    output_file: Union[str, LiteralString], matrix=None, interpolation_method: str = 'linear',
+def matched_reslice(file_to_reslice: str, file_to_match: str,
+                    output_file: str, matrix=None, interpolation_method: str = 'linear',
                     landmark=None, new_loc=None):
     """
     Position the content of file_to_reslice in the correct location in file_to_match.
 
     Args:
-        file_to_reslice (str or LiteralString):
-        file_to_match (str or LiteralString):
-        output_file (str or LiteralString):
+        file_to_reslice (str):
+        file_to_match (str):
+        output_file (str):
         matrix (optional, default=None): 4x3 rigid transformation from scanner coordinate system of `file_to_reslice` to `file_to_match`.
         interpolation_method (str, optional, default="linear"): Interpolation method, supported options are `linear` and `nearest`.
         landmark (optional, default=None): Scanner coordinates of landmark in input scene to reslice
