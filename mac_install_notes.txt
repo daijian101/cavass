@@ -23,7 +23,7 @@ Install wxWidgets:
   tar xvf ~/Downloads/InsightToolkit-5.3.0.tar.gz
   mkdir itk-build
   cd itk-build
-  ccmake ../InsightToolkit-5.3.0
+  ccmake ../InsightToolkit-5.3.0 (add -DCMAKE_POLICY_VERSION_MINIMUM=3.5 if ccmake version is high, >= 4.0.0)
   press "c" to configure
   press "e"
   press "c"
@@ -31,13 +31,13 @@ Install wxWidgets:
   press "g"
   make
 
-Note: You can also install itk by "brew intall itk". But it is failed when building cavass if itk is installed through this way. I tried both Intel and M2 CPU Macs. I am not familiar with the compile process and don't know why the problem happened. If you solve this problem, please let me konw!!
+Note: You can also install itk by "brew intall itk". But it is failed when building cavass if itk is installed through this way. I tried both Intel and M2 CPU Macs. I am not familiar with the compile process and don't know why the problem happened. If you solve this problem, please let me know!!
 
 Obtain cavass source code.
   git clone https://github.com/MedicalImageProcessingGroup/cavass.git
   mkdir cavass-build
   cd cavass-build
-  ccmake ../cavass
+  ccmake ../cavass ((add -DCMAKE_POLICY_VERSION_MINIMUM=3.5 if ccmake version is high, >= 4.0.0))
   press "c" for configure
   press "e"
 
