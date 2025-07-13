@@ -27,7 +27,7 @@ def get_slice_range(partial_region_file: str, entire_region_file: str):
             slice_number_1[4] != slice_number_2[4]) or (slice_number_1[6] != slice_number_2[6]) or (
             slice_number_1[7] != slice_number_2[7]):
         logger.warning(
-            f'Input files do not match.\nInput file 1 is {partial_region_file}.\nInput file 2 is {entire_region_file}.')
+            f"Input files do not match.\nInput file 1 is {partial_region_file}.\nInput file 2 is {entire_region_file}.")
         unmatched = [partial_region_file, entire_region_file]
     else:
         unmatched = []

@@ -26,7 +26,7 @@ def match(unmatched_file: str,
 
     made_output_dir, output_dir = ensure_output_file_dir_existence(output_file)
     file_type = os.path.splitext(unmatched_file[0])[1][1:]
-    interpolation_method = 'nearest' if file_type == 'BIM' else 'linear'
+    interpolation_method = "nearest" if file_type == "BIM" else "linear"
     try:
         matched_reslice(unmatched_file, file_to_match, output_file, interpolation_method=interpolation_method)
     except Exception as e:

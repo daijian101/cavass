@@ -30,9 +30,11 @@ def integrate_trimmed_images(trimmed_files: Union[list[str], tuple[str]],
 
     """
 
-    assert os.path.exists(reference_file), f'{reference_file} does not exist!.'
+    if not os.path.isfile(reference_file):
+        raise FileNotFoundError(f"Reference file {reference_file} does not exist.")
     for each in trimmed_files:
-        assert os.path.exists(each), f'{each} does not exist!.'
+        if not os.path.isfile(each):
+            raise FileNotFoundError(f"Trimmed file {each} does not exist.")
 
     # Get ROI from the first and last untrimmed files.
     # The inferior location is the inferior location of the first trimmed image in the untrimmed image.
@@ -67,9 +69,9 @@ def integrate_trimmed_images(trimmed_files: Union[list[str], tuple[str]],
     tmp_files = []
     reslice_files = []
     file_type = os.path.splitext(trimmed_files[0])[1][1:]
-    interpolation_method = 'nearest' if file_type == 'BIM' else 'linear'
+    interpolation_method = "nearest" if file_type == "BIM" else "linear"
     for trimmed_file in trimmed_files:
-        reslice_file = os.path.join(output_dir_2, f'{uuid.uuid1()}.{file_type}')
+        reslice_file = os.path.join(output_dir_2, f"{uuid.uuid1()}.{file_type}")
         tmp_files.append(reslice_file)
         reslice_files.append(reslice_file)
         try:
@@ -91,19 +93,19 @@ def integrate_trimmed_images(trimmed_files: Union[list[str], tuple[str]],
     if len(reslice_files) > 1:
         or_op_file_1 = reslice_files[0]
         or_op_file_2 = reslice_files[1]
-        or_op_output_file = os.path.join(output_dir_2, f'{uuid.uuid1()}.{file_type}')
+        or_op_output_file = os.path.join(output_dir_2, f"{uuid.uuid1()}.{file_type}")
         or_op_output_files = [or_op_output_file]
         tmp_files.append(or_op_output_file)
-        bin_ops(or_op_file_1, or_op_file_2, or_op_output_file, op='or')
+        bin_ops(or_op_file_1, or_op_file_2, or_op_output_file, op="or")
         if len(reslice_files) > 2:
             for reslice_file in reslice_files[2:]:
                 or_op_file_1 = or_op_output_files[-1]
                 or_op_file_2 = reslice_file
-                or_op_output_file = os.path.join(output_dir_2, f'{uuid.uuid1()}.{file_type}')
+                or_op_output_file = os.path.join(output_dir_2, f"{uuid.uuid1()}.{file_type}")
                 or_op_output_files.append(or_op_output_file)
                 tmp_files.append(or_op_output_file)
                 try:
-                    bin_ops(or_op_file_1, or_op_file_2, or_op_output_file, op='or')
+                    bin_ops(or_op_file_1, or_op_file_2, or_op_output_file, op="or")
                 except Exception as e:
                     if made_output_dir_1 and os.path.isdir(output_dir_1):
                         shutil.rmtree(output_dir_1)

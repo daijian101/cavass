@@ -3,14 +3,15 @@ import os
 import numpy as np
 
 
-def read_mat(input_file, key='scene'):
+def read_mat(input_file, key="scene"):
     from scipy.io import loadmat
-    assert os.path.isfile(input_file), f'{input_file} does not exist or is not a file!'
+    if not os.path.isfile(input_file):
+        raise FileNotFoundError(f"Input file {input_file} does not exist.")
     data = loadmat(input_file)[key]
     return data
 
 
-def save_mat(output_file, data, key='scene'):
+def save_mat(output_file, data, key="scene"):
     from scipy.io import savemat
     ensure_output_file_dir_existence(output_file)
     savemat(output_file, {key: data})
@@ -19,7 +20,7 @@ def save_mat(output_file, data, key='scene'):
 def save_nifti(output_file,
                data,
                voxel_spacing=None,
-               orientation='LPI'):
+               orientation="LPI"):
     """
     Save image with nii format.
 
@@ -38,9 +39,9 @@ def save_nifti(output_file,
         voxel_spacing = (1.0, 1.0, 1.0)  # replace this with your desired voxel spacing in millimeters
 
     match orientation:
-        case 'LPI':
+        case "LPI":
             affine_matrix = np.diag(list(voxel_spacing) + [1.0])
-        case 'ARI':
+        case "ARI":
             # calculate the affine matrix based on the desired voxel spacing and ARI orientation
             affine_matrix = np.array([
                 [0, -voxel_spacing[0], 0, 0],
@@ -49,7 +50,7 @@ def save_nifti(output_file,
                 [0, 0, 0, 1]
             ])
         case _:
-            raise ValueError(f'Unsupported orientation {orientation}.')
+            raise ValueError(f"Unsupported orientation {orientation}.")
 
     # create a NIfTI image object
     import nibabel as nib
