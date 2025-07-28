@@ -31,24 +31,30 @@ def dicom2cavass(input_dicom_dir, output_file, offset_value=0, copy_pose_file=No
             raise FileNotFoundError(f"Copy pose file {copy_pose_file} does not exist.")
 
     made_output_dir, output_dir = ensure_output_file_dir_existence(output_file)
-    split = os.path.splitext(output_file)
-    root = split[0]
-    extension = split[1]
-    output_tmp_file = root + "_TMP" + extension
+
+    input_dicom_dir = input_dicom_dir.replace(" ", "\ ")
+    output_file = output_file.replace(" ", "\ ")
     try:
-        r = execute_cmd(f"from_dicom {input_dicom_dir}/* {output_tmp_file} +{offset_value}")
-        copy_pose(output_tmp_file, copy_pose_file, output_file)
+        if copy_pose_file is None:
+            r = execute_cmd(f"from_dicom {input_dicom_dir}/* {output_file} +{offset_value}")
+        else:
+            split = os.path.splitext(output_file)
+            root = split[0]
+            extension = split[1]
+            output_tmp_file = root + "_TMP" + extension
+            r = execute_cmd(f"from_dicom {input_dicom_dir}/* {output_tmp_file} +{offset_value}")
+            copy_pose(output_tmp_file, copy_pose_file, output_file)
+
     except Exception as e:
         if made_output_dir and os.path.isdir(output_dir):
             shutil.rmtree(output_dir)
-        else:
-            if os.path.exists(output_tmp_file):
-                os.remove(output_tmp_file)
 
-            if os.path.exists(output_file):
-                os.remove(output_file)
+        if copy_pose_file is not None and os.path.exists(output_tmp_file):
+            os.remove(output_tmp_file)
+
+        if os.path.exists(output_file):
+            os.remove(output_file)
         raise e
-    os.remove(output_tmp_file)
     return r
 
 
