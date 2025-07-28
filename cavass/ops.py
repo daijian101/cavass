@@ -18,7 +18,7 @@ else:
 
 def env():
     if CAVASS_PROFILE_PATH is not None:
-        PATH = f"{os.environ["PATH"]}:{os.path.expanduser(CAVASS_PROFILE_PATH)}"
+        PATH = os.environ["PATH"] + ":" + os.path.expanduser(CAVASS_PROFILE_PATH)
         VIEWNIX_ENV = os.path.expanduser(CAVASS_PROFILE_PATH)
         return {"PATH": PATH, "VIEWNIX_ENV": VIEWNIX_ENV}
     return None
