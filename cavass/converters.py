@@ -11,14 +11,14 @@ from cavass.ops import execute_cmd, get_voxel_spacing, read_cavass_file, copy_po
 from cavass.utils import one_hot
 
 
-def dicom2cavass(input_dicom_dir, output_file, offset_value=0, copy_pose_file=None):
+def dicom2cavass(input_dicom_dir, output_file, offset=0, copy_pose_file=None):
     """
     Note that if the output file path is too long, this command may be failed.
 
     Args:
         input_dicom_dir (str):
         output_file (str):
-        offset_value (int, optional, default=0):
+        offset (int, optional, default=0):
         copy_pose_file (str, optional, default=None): If `copy_pose_file` is given, copy pose of this
         file to the output file.
 
@@ -36,13 +36,13 @@ def dicom2cavass(input_dicom_dir, output_file, offset_value=0, copy_pose_file=No
     output_file = output_file.replace(" ", "\ ")
     try:
         if copy_pose_file is None:
-            r = execute_cmd(f"from_dicom {input_dicom_dir}/* {output_file} +{offset_value}")
+            r = execute_cmd(f"from_dicom {input_dicom_dir}/* {output_file} +{offset}")
         else:
             split = os.path.splitext(output_file)
             root = split[0]
             extension = split[1]
             output_tmp_file = root + "_TMP" + extension
-            r = execute_cmd(f"from_dicom {input_dicom_dir}/* {output_tmp_file} +{offset_value}")
+            r = execute_cmd(f"from_dicom {input_dicom_dir}/* {output_tmp_file} +{offset}")
             copy_pose(output_tmp_file, copy_pose_file, output_file)
 
     except Exception as e:
@@ -58,7 +58,7 @@ def dicom2cavass(input_dicom_dir, output_file, offset_value=0, copy_pose_file=No
     return r
 
 
-def nifti2cavass(input_nifti_file, output_file, modality, offset_value=0, copy_pose_file=None):
+def nifti2cavass(input_nifti_file, output_file, modality, offset=0, copy_pose_file=None):
     """
     Convert NIfTI image to cavass image.
 
@@ -66,7 +66,7 @@ def nifti2cavass(input_nifti_file, output_file, modality, offset_value=0, copy_p
         input_nifti_file (str):
         output_file (str):
         modality (Modality):
-        offset_value (int, optional, default=0):
+        offset (int, optional, default=0):
         copy_pose_file (str, optional, default=None):
     """
 
@@ -82,7 +82,7 @@ def nifti2cavass(input_nifti_file, output_file, modality, offset_value=0, copy_p
     tmp_dicom_dir = os.path.join(output_dir, f"{uuid1()}")
     try:
         r1 = nifti2dicom(input_nifti_file, tmp_dicom_dir, modality=modality, force_overwrite=True)
-        r2 = dicom2cavass(tmp_dicom_dir, output_file, offset_value, copy_pose_file)
+        r2 = dicom2cavass(tmp_dicom_dir, output_file, offset, copy_pose_file)
     except Exception as e:
         if made_output_dir and os.path.isdir(output_dir):
             shutil.rmtree(output_dir)
